@@ -248,16 +248,11 @@ canvas {
 
 /* wrapper central */
 .page-center{
-  min-height: 100svh;
+  min-height: calc(100svh - 48px);  /* 24px topo + 24px base */
   display:flex; flex-direction:column;
   justify-content:center; align-items:center;
   gap:12px;
-
-  /* respiro fica aqui, não no body */
   padding: 24px;
-
-  /* ajuste fino opcional: negativo sobe, positivo desce */
-  margin-top: var(--center-offset, 0px);
 }
 
 /* Logo do topo (index e/ou outras páginas) */
@@ -273,6 +268,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
