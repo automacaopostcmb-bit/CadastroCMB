@@ -14,6 +14,7 @@ body {
   background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
   background-attachment: fixed; /* o degradê “cola” no viewport */
 }
+
 h1, h2, h3 { text-align: center; margin: 0 0 14px 0; }
 
 /* Inputs / Textareas / Buttons padrão */
@@ -26,12 +27,14 @@ input, textarea, button {
   box-sizing: border-box;
   display: block;
 }
+
 input[type="range"] {
   width: 100%;
   max-width: 500px;
   margin: 6px auto 12px;
   display: block;
 }
+
 canvas {
   margin: 20px auto;
   width: 100%;
@@ -241,10 +244,22 @@ canvas {
   align-items: center;
   font-weight: bold;
 }
+.loader { text-align:center; }
+.loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
+.loader-text { font-size: 20px; color:#000; }
 
 /* ===== Centro vertical reutilizável (use <div class="page-center"> ... ) ===== */
-.page-center {
-  --center-shift: 0;          /* padrão */
+.page-center{
+  min-height: 100svh;              /* ocupa a altura visível (corrige mobile) */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;         /* CENTRALIZA verticalmente */
+  align-items: center;             /* CENTRALIZA horizontalmente */
+  padding: 24px;
+  gap: 12px;
+
+  /* deslocamento opcional: negativo = sobe, positivo = desce */
+  --center-shift: 0;
   transform: translateY(var(--center-shift));
   will-change: transform;
 }
@@ -262,12 +277,3 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
-
-
-
-.loader { text-align:center; }
-.loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
-.loader-text { font-size: 20px; color:#000; }
-
-
-
