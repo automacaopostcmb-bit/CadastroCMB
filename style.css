@@ -258,7 +258,7 @@ canvas {
   gap: 12px;
 
   /* deslocamento: negativo = sobe, positivo = desce */
-  --center-shift: 400;
+  --center-shift: 100;
   transform: translateY(var(--center-shift));
   will-change: transform;
 }
@@ -276,6 +276,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
