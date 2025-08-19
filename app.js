@@ -1,7 +1,7 @@
 /* =========================================================
    CONFIGURAÇÃO (edite aqui limites, campos de revisão, etc.)
    ========================================================= */
-const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CMB@main/Frame.png';
+const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame.png';
 
 const CHAR_LIMITS = {
   titulo:    { min: 5,  max: 60  },  // Etapa 5
@@ -521,3 +521,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
