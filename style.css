@@ -248,17 +248,16 @@ canvas {
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
 
-/* ===== Centro vertical reutilizável (use <div class="page-center"> ... ) ===== */
 .page-center{
-  min-height: 100svh;              /* ocupa a altura visível (corrige mobile) */
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
-  justify-content: center;         /* CENTRALIZA verticalmente */
-  align-items: center;             /* CENTRALIZA horizontalmente */
+  justify-content: center;   /* centraliza vertical */
+  align-items: center;       /* centraliza horizontal */
   padding: 24px;
   gap: 12px;
 
-  /* deslocamento opcional: negativo = sobe, positivo = desce */
+  /* deslocamento: negativo = sobe, positivo = desce */
   --center-shift: 0;
   transform: translateY(var(--center-shift));
   will-change: transform;
@@ -277,3 +276,4 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
