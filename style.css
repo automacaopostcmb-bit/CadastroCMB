@@ -249,8 +249,11 @@ canvas {
 .loader-text { font-size: 20px; color:#000; }
 
 .page-center{
-  /* ocupa a tela inteira MENOS o padding do body (24 top + 24 bottom) */
+  /* Fallbacks por ordem: vh comum → svh/dvh → variável --vh medida via JS */
+  min-height: calc(100vh  - 48px);
   min-height: calc(100svh - 48px);
+  min-height: calc(100dvh - 48px);
+  min-height: calc(var(--vh, 1vh) * 100 - 48px);
 
   display: flex;
   flex-direction: column;
@@ -258,7 +261,7 @@ canvas {
   align-items: center;       /* centraliza horizontal */
   gap: 12px;
 
-  /* deslocamento extra: positivo = desce, negativo = sobe */
+  /* ajuste fino: positivo = desce, negativo = sobe */
   margin-top: var(--center-offset, 0px);
 }
 
@@ -275,6 +278,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
