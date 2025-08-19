@@ -484,9 +484,25 @@ function buildReview() {
 }
 
 /* ===========================
-   BOOTSTRAP DA PÁGINA
+   MENU: voltar para index.html?back=1
+   =========================== */
+function goToMenu() {
+  // monta URL relativa para o index na MESMA pasta do arquivo atual
+  const base = location.href.replace(/[^/]+$/, ''); // remove o nome do arquivo atual
+  window.location.href = base + 'index.html?back=1';
+}
+
+/* ===========================
+   BOOTSTRAP DA PÁGINA (com GUARD)
    =========================== */
 document.addEventListener('DOMContentLoaded', () => {
+  // ✅ Só roda o wizard se a página tiver os elementos do wizard
+  const isWizardPage = !!document.querySelector('.step') && !!document.getElementById('wizard-indicator');
+  if (!isWizardPage) {
+    // Ex.: estamos no index.html (login) → não inicializa nada daqui
+    return;
+  }
+
   // máscara do telefone
   const telEl = document.getElementById('telefone');
   if (telEl) {
@@ -497,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initCanvas();
-  checkAuth();
+  checkAuth(); // exige chave válida para abrir a página
 
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
@@ -521,4 +537,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
-
