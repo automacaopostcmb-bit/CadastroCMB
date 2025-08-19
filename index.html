@@ -63,24 +63,25 @@ body {
   </style>
 </head>
 <body>
-<img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo">
+  <div class="page-center">
+    <img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo">
 
-  <h2 id="tituloLogin">Login</h2>
+    <h2 id="tituloLogin">Login</h2>
 
-  <div id="login-area">
-    <input type="text" id="chave" placeholder="Digite sua chave de acesso" />
-    <button id="btnEntrar" onclick="login()">Entrar</button>
+    <div id="login-area">
+      <input type="text" id="chave" placeholder="Digite sua chave de acesso" />
+      <button id="btnEntrar" onclick="login()">Entrar</button>
+    </div>
+
+    <div id="loading"><p>Carregando páginas…</p></div>
+
+    <div id="menu">
+      <h3>Páginas disponíveis</h3>
+      <div id="botoes"></div>
+      <p id="linkSair" onclick="logout()">Sair</p>
+    </div>
   </div>
-
-  <!-- Loading -->
-  <div id="loading"><p>Carregando páginas…</p></div>
-
-  <!-- Menu -->
-  <div id="menu">
-    <h3>Páginas disponíveis</h3>
-    <div id="botoes"></div>
-    <p id="linkSair" onclick="logout()">Sair</p>
-  </div>
+</body>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
@@ -204,6 +205,7 @@ async function carregarMenu() {
 }
 </script>
 
-</body>
+
 </html>
+
 
