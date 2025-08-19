@@ -1,13 +1,18 @@
 /* =========================
    ESTILOS GERAIS / LAYOUT
    ========================= */
+/* Fundo com degradê vertical (fixo) para TODO o site */
 html, body { height: 100%; }
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 24px;
   min-height: 100dvh;
-  background-color: #e6f0ff;
+
+  /* gradiente azul -> azul claro -> quase branco */
+  background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
+  background-attachment: fixed; /* o degradê “cola” no viewport */
 }
 h1, h2, h3 { text-align: center; margin: 0 0 14px 0; }
 
@@ -239,3 +244,4 @@ canvas {
 .loader { text-align:center; }
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
+
