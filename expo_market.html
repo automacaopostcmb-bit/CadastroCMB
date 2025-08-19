@@ -14,7 +14,7 @@
 
 <body>
   <!-- Link de retorno (escondido na tela final) -->
-  <a class="link-voltar" id="link-topo" href="index.html?back=1">Voltar</a>
+  <a class="link-voltar" id="link-topo" href="index.html?back=1">Voltar/Menu</a>
 
   <!-- Indicador da etapa -->
   <div id="wizard-indicator">Etapa 1 de 7</div>
@@ -178,7 +178,7 @@
       <p>Obrigado por enviar suas informações. Você já pode baixar a imagem.</p>
 
       <button class="btn-download" id="btn-final-download" onclick="baixarImagem()">Baixar Imagem</button>
-      <button class="btn-menu" id="btn-menu" onclick="window.location.href='index.html'">Menu</button>
+      <button class="btn-menu" id="btn-menu" onclick="window.location.href='index.html?back=1'">Menu</button>
     </div>
   </section>
 
@@ -195,3 +195,4 @@
   <script src="app.js?v=1"></script>
 </body>
 </html>
+
