@@ -243,14 +243,10 @@ canvas {
 }
 
 /* ===== Centro vertical reutilizável (use <div class="page-center"> ... ) ===== */
-.page-center{
-  min-height: 100svh;              /* altura visível no mobile (corrige “empurrão” da barra) */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;         /* CENTRALIZA verticalmente */
-  align-items: center;             /* CENTRALIZA horizontalmente */
-  padding: 24px;
-  gap: 12px;                        /* espaço entre os elementos */
+.page-center {
+  --center-shift: 0;          /* padrão */
+  transform: translateY(var(--center-shift));
+  will-change: transform;
 }
 
 /* Logo do topo (index e/ou outras páginas) */
@@ -272,5 +268,6 @@ canvas {
 .loader { text-align:center; }
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
+
 
 
