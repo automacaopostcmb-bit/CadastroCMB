@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Área Restrita</title>
+  <style>
+    /* Centralizado e responsivo */
+    html, body { height: 100%; }
+    body {
+      font-family: Arial, sans-serif;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      min-height: 100dvh; margin: 0; padding: 24px;
+    }
+    h2, h3 { margin: 0 0 14px 0; text-align: center; }
+
+    /* Campo e botões */
+    input, button {
+      display: block; margin: 10px 0; padding: 12px;
+      width: 100%; max-width: 420px; font-size: 16px; box-sizing: border-box;
+    }
+
+    /* Containers */
+    #menu, #loading { width: 100%; max-width: 420px; }
+    #menu { display: none; }
+    #loading { display: none; }
+    #loading p { text-align: center; margin: 0; }
+
+    /* “Sair” link */
+    #linkSair {
+      cursor: pointer; color: #007bff; text-align: center;
+      font-size: 14px; margin-top: 16px; user-select: none;
+    }
+    #linkSair:hover { text-decoration: underline; }
+
+    @media (min-width: 768px) {
+      input, button, #menu, #loading { max-width: 480px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h2 id="tituloLogin">Login</h2>
+
+  <div id="login-area">
+    <input type="text" id="chave" placeholder="Digite sua chave de acesso" />
+    <button id="btnEntrar" onclick="login()">Entrar</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading"><p>Carregando páginas…</p></div>
+
+  <!-- Menu -->
+  <div id="menu">
+    <h3>Páginas disponíveis</h3>
+    <div id="botoes"></div>
+    <p id="linkSair" onclick="logout()">Sair</p>
+  </div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
+
+const paginas = [
+  {nome: "area_artistas",        label: "Área dos Artistas"},
+  {nome: "expo_business",        label: "Expositor Área Business"},
+  {nome: "expo_market",          label: "Expositor Área Market"},
+  {nome: "cadastro_masterclass", label: "Cadastro Masterclass"},
+  {nome: "cadastro_lancamento",  label: "Cadastro de Lançamento"},
+];
+
+let isLoading = false;
+
+function setLoading(state) {
+  isLoading = state;
+  const btn = document.getElementById("btnEntrar");
+  if (btn) {
+    btn.disabled = state;
+    btn.textContent = state ? "Carregando..." : "Entrar";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const isBack = params.get("back") === "1";
+  const chave = (localStorage.getItem("chave") || "").trim();
+
+  if (isBack && chave) {
+    document.getElementById("tituloLogin").style.display = "none";
+    document.getElementById("login-area").style.display = "none";
+    carregarMenu();
+  } else {
+    // acesso "frio" — exige login
+    localStorage.removeItem("chave");
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("botoes").innerHTML = "";
+    document.getElementById("chave").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") login();
+    });
+  }
+});
+
+function login() {
+  const chave = document.getElementById("chave").value.trim();
+  if (!chave) return alert("Digite sua chave.");
+  localStorage.setItem("chave", chave);
+  carregarMenu();
+}
+
+function logout() {
+  localStorage.removeItem("chave");
+  setLoading(false);
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("botoes").innerHTML = "";
+  document.getElementById("chave").value = "";
+  document.getElementById("tituloLogin").style.display = "block";
+  document.getElementById("login-area").style.display = "block";
+  // remove ?back=1 da URL se existir
+  if (window.location.search.includes("back=1")) {
+    window.history.replaceState({}, "", "index.html");
+  }
+}
+
+async function carregarMenu() {
+  if (isLoading) return;
+  const chave = localStorage.getItem("chave");
+  if (!chave) return;
+
+  setLoading(true);
+
+  const titulo  = document.getElementById("tituloLogin");
+  const loginAr = document.getElementById("login-area");
+  const menu    = document.getElementById("menu");
+  const area    = document.getElementById("botoes");
+  const loading = document.getElementById("loading");
+
+  // só loading na tela
+  titulo.style.display = "none";
+  loginAr.style.display = "none";
+  menu.style.display = "none";
+  loading.style.display = "block";
+
+  try {
+    // UMA chamada: retorna todas as permissões da chave
+    const resp = await fetch(`${API_URL}?chave=${encodeURIComponent(chave)}`);
+    const data = await resp.json();
+    const perms = data.permissoes || {};
+
+    area.innerHTML = "";
+
+    let algumPermitido = false;
+    paginas.forEach((pag) => {
+      if (perms[pag.nome]) {
+        algumPermitido = true;
+        const btn = document.createElement("button");
+        btn.textContent = pag.label;
+        btn.addEventListener("click", () => {
+          window.location.href = `${pag.nome}.html`;
+        }, { once: true });
+        area.appendChild(btn);
+      }
+    });
+
+    loading.style.display = "none";
+    if (algumPermitido) {
+      menu.style.display = "block";
+    } else {
+      alert("Acesso inválido.");
+      logout();
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar. Tente novamente.");
+    loading.style.display = "none";
+    logout();
+  } finally {
+    setLoading(false);
+  }
+}
+</script>
+
+</body>
+</html>
