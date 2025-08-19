@@ -4,15 +4,13 @@
 /* Fundo com degradê vertical (fixo) para TODO o site */
 html, body { height: 100%; }
 
-body {
+body{
   font-family: Arial, sans-serif;
   margin: 0;
-  padding: 24px;
+  padding: 0;                 /* <-- ZERA o padding vertical do body */
   min-height: 100dvh;
-
-  /* gradiente azul -> azul claro -> quase branco */
   background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
-  background-attachment: fixed; /* o degradê “cola” no viewport */
+  background-attachment: fixed;
 }
 
 h1, h2, h3 { text-align: center; margin: 0 0 14px 0; }
@@ -248,21 +246,18 @@ canvas {
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
 
+/* wrapper central */
 .page-center{
-  /* Fallbacks por ordem: vh comum → svh/dvh → variável --vh medida via JS */
-  min-height: calc(100vh  - 48px);
-  min-height: calc(100svh - 48px);
-  min-height: calc(100dvh - 48px);
-  min-height: calc(var(--vh, 1vh) * 100 - 48px);
+  min-height: 100svh;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  gap:12px;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;   /* centraliza vertical */
-  align-items: center;       /* centraliza horizontal */
-  gap: 12px;
+  /* respiro fica aqui, não no body */
+  padding: 24px;
 
-  /* ajuste fino: positivo = desce, negativo = sobe */
-  margin-top: var(--center-offset, -30%);
+  /* ajuste fino opcional: negativo sobe, positivo desce */
+  margin-top: var(--center-offset, 0px);
 }
 
 /* Logo do topo (index e/ou outras páginas) */
@@ -278,6 +273,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
