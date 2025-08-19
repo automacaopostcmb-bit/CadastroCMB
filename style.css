@@ -262,7 +262,7 @@ canvas {
   gap: 12px;
 
   /* ajuste fino: positivo = desce, negativo = sobe */
-  margin-top: var(--center-offset, 0px);
+  margin-top: var(--center-offset, -60px);
 }
 
 /* Logo do topo (index e/ou outras páginas) */
@@ -278,6 +278,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
