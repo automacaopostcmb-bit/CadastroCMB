@@ -17,7 +17,7 @@
 <body>
   <!-- Wrapper que centraliza vertical/horizontal.
        Use --center-shift para subir/descer (negativo = sobe). -->
- <div class="page-center" style="--center-offset: 60px;">
+<div class="page-center" style="--center-offset: -40px;">
     <img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo">
 
     <h2 id="tituloLogin">Login</h2>
@@ -158,8 +158,21 @@ async function carregarMenu() {
   }
 }
 </script>
+
+<script>
+  // mede a altura real útil da janela e salva em --vh
+  function setRealVh() {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  }
+  setRealVh();
+  window.addEventListener('resize', setRealVh);
+  window.addEventListener('orientationchange', setRealVh);
+</script>
+  
 </body>
 </html>
+
 
 
 
