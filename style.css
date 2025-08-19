@@ -4,10 +4,17 @@
 /* Fundo com degradê vertical (fixo) para TODO o site */
 html, body { height: 100%; }
 
+/* 1) Define um gutter (respiro) responsivo */
+:root{
+  --gutter: clamp(12px, 4vw, 20px);  /* ajuste como quiser */
+}
+
+/* 2) Mantém o padding vertical zerado e aplica só nas laterais */
 body{
   font-family: Arial, sans-serif;
   margin: 0;
-  padding: 0;                 /* <-- ZERA o padding vertical do body */
+  padding: 0;                    /* zera vertical */
+  padding-inline: var(--gutter); /* 👈 respiro horizontal */
   min-height: 100dvh;
   background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
   background-attachment: fixed;
@@ -268,6 +275,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
