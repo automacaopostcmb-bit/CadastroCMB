@@ -4,66 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cadastro de expositores CMB</title>
-  <link rel="stylesheet" href="style.css?v=2">
 
+  <!-- CSS global (bump de cache com v=3) -->
+  <link rel="stylesheet" href="style.css?v=3">
+
+  <!-- Deixe o body básico; todo o layout é controlado pela .page-center no style.css -->
   <style>
-    /* Centralizado e responsivo */
     html, body { height: 100%; }
-    body {
-      font-family: Arial, sans-serif;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      min-height: 100dvh; margin: 0; padding: 24px;
-    }
-    h2, h3 { margin: 0 0 14px 0; text-align: center; }
-
-    /* Campo e botões */
-    input, button {
-      display: block; margin: 10px 0; padding: 12px;
-      width: 100%; max-width: 420px; font-size: 16px; box-sizing: border-box;
-    }
-
-    /* Containers */
-    #menu, #loading { width: 100%; max-width: 420px; }
-    #menu { display: none; }
-    #loading { display: none; }
-    #loading p { text-align: center; margin: 0; }
-
-    /* “Sair” link */
-    #linkSair {
-      cursor: pointer; color: #007bff; text-align: center;
-      font-size: 14px; margin-top: 16px; user-select: none;
-    }
-    #linkSair:hover { text-decoration: underline; }
-
-    @media (min-width: 768px) {
-      input, button, #menu, #loading { max-width: 480px; }
-    }
-
-/* Centraliza o conteúdo do login e deixa um respiro no topo */
-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Logo no topo, responsivo */
-.header-logo {
-  display: block;
-  width: 220px;              /* ajuste à vontade */
-  max-width: 60vw;           /* se adapta em telas pequenas */
-  margin: clamp(40px, 10vh, 120px) auto 10px;
-}
-
-/* Caixa do menu e do loading continuam com largura máxima */
-#menu, #loading { width: 100%; max-width: 420px; }
-
-
-    
+    body { margin: 0; }
   </style>
 </head>
 <body>
-  <div class="page-center" style="--center-shift: -500px;">
+  <!-- Wrapper que centraliza vertical/horizontal.
+       Use --center-shift para subir/descer (negativo = sobe). -->
+  <div class="page-center" style="--center-shift: -60px;">
     <img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo">
 
     <h2 id="tituloLogin">Login</h2>
@@ -73,15 +27,16 @@ body {
       <button id="btnEntrar" onclick="login()">Entrar</button>
     </div>
 
-    <div id="loading"><p>Carregando páginas…</p></div>
+    <!-- Loading -->
+    <div id="loading" style="display:none;"><p>Carregando páginas…</p></div>
 
-    <div id="menu">
+    <!-- Menu -->
+    <div id="menu" style="display:none;">
       <h3>Páginas disponíveis</h3>
       <div id="botoes"></div>
-      <p id="linkSair" onclick="logout()">Sair</p>
+      <p id="linkSair" onclick="logout()" style="cursor:pointer; color:#007bff; text-align:center; font-size:14px; margin-top:16px;">Sair</p>
     </div>
   </div>
-</body>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
@@ -115,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("login-area").style.display = "none";
     carregarMenu();
   } else {
-    // acesso "frio" — exige login
+    // acesso “frio” — exige login
     localStorage.removeItem("chave");
     document.getElementById("menu").style.display = "none";
     document.getElementById("botoes").innerHTML = "";
@@ -140,7 +95,6 @@ function logout() {
   document.getElementById("chave").value = "";
   document.getElementById("tituloLogin").style.display = "block";
   document.getElementById("login-area").style.display = "block";
-  // remove ?back=1 da URL se existir
   if (window.location.search.includes("back=1")) {
     window.history.replaceState({}, "", "index.html");
   }
@@ -204,10 +158,5 @@ async function carregarMenu() {
   }
 }
 </script>
-
-
+</body>
 </html>
-
-
-
-
