@@ -1,24 +1,31 @@
 /* =========================
    ESTILOS GERAIS / LAYOUT
    ========================= */
+
 /* Fundo com degradê vertical (fixo) para TODO o site */
 html, body { height: 100%; }
 
-/* 1) Define um gutter (respiro) responsivo */
+/* Evita scrollbar horizontal quando usamos margens negativas (full-bleed) */
+html { overflow-x: hidden; }
+
+/* Respiro lateral global */
 :root{
   --gutter: clamp(12px, 4vw, 20px);  /* ajuste como quiser */
 }
 
-/* 2) Mantém o padding vertical zerado e aplica só nas laterais */
+/* Body com “respiro” nas laterais e sem padding vertical */
 body{
   font-family: Arial, sans-serif;
   margin: 0;
-  padding: 0;                    /* zera vertical */
-  padding-inline: var(--gutter); /* 👈 respiro horizontal */
+  padding-block: 0;
+  padding-inline: var(--gutter);    /* ✅ respiro horizontal global */
   min-height: 100dvh;
   background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
   background-attachment: fixed;
 }
+
+/* Melhor controle de sizing */
+*, *::before, *::after { box-sizing: border-box; }
 
 h1, h2, h3 { text-align: center; margin: 0 0 14px 0; }
 
@@ -29,7 +36,6 @@ input, textarea, button {
   margin: 10px auto;
   padding: 12px;
   font-size: 16px;
-  box-sizing: border-box;
   display: block;
 }
 
@@ -50,9 +56,7 @@ canvas {
   background: #fff;
 }
 
-/* usa o mesmo gutter do body */
-:root { --gutter: clamp(12px, 4vw, 20px); }
-
+/* Faixa azul com full-bleed (vai até a borda da tela) */
 .faixa-secao{
   /* puxa a faixa para fora do padding lateral do body */
   margin: 16px calc(var(--gutter) * -1);
@@ -248,13 +252,13 @@ canvas {
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
 
-/* wrapper central */
+/* Wrapper central de páginas (login/wizard) */
 .page-center{
-  min-height: calc(100svh - 48px);  /* 24px topo + 24px base */
+  min-height: calc(100svh - 0px); /* sem interferir no respiro do body */
   display:flex; flex-direction:column;
   justify-content:center; align-items:center;
   gap:12px;
-  padding: 24px;
+  padding: 24px 0; /* sem padding lateral aqui; o lateral já vem do body */
 }
 
 /* Logo do topo (index e/ou outras páginas) */
@@ -262,7 +266,7 @@ canvas {
   display: block;
   width: clamp(160px, 50vw, 280px); /* responsivo */
   height: auto;
-  margin: 0 auto 8px;               /* sem margem gigante superior */
+  margin: 0 auto 8px;
 }
 
 /* Largura dos blocos do login/menu/loading */
@@ -270,18 +274,3 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
