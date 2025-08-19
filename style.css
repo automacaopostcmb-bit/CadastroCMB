@@ -249,18 +249,17 @@ canvas {
 .loader-text { font-size: 20px; color:#000; }
 
 .page-center{
-  min-height: 100svh;
+  /* ocupa a tela inteira MENOS o padding do body (24 top + 24 bottom) */
+  min-height: calc(100svh - 48px);
+
   display: flex;
   flex-direction: column;
   justify-content: center;   /* centraliza vertical */
   align-items: center;       /* centraliza horizontal */
-  padding: 24px;
   gap: 12px;
 
-  /* deslocamento: negativo = sobe, positivo = desce */
-  --center-shift: -500;
-  transform: translateY(var(--center-shift));
-  will-change: transform;
+  /* deslocamento extra: positivo = desce, negativo = sobe */
+  margin-top: var(--center-offset, 0px);
 }
 
 /* Logo do topo (index e/ou outras páginas) */
@@ -276,6 +275,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
