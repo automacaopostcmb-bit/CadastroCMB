@@ -50,26 +50,21 @@ canvas {
   background: #fff;
 }
 
-/* Faixa azul do título de etapa */
-.faixa-secao {
-  width: 100%;
-  background-color: #00BFFF;
-  padding: 12px 0;
-  text-align: center;
-  margin: 16px 0;
-}
-.faixa-secao span { color: #fff; font-size: 22px; font-weight: bold; }
+/* usa o mesmo gutter do body */
+:root { --gutter: clamp(12px, 4vw, 20px); }
 
-/* Labels / dicas */
-.title-label {
-  font-weight: bold;
-  font-size: 16px;
-  display: block;
-  margin-top: 15px;
-  margin-bottom: 6px;
-  color: #333;
+.faixa-secao{
+  /* puxa a faixa para fora do padding lateral do body */
+  margin: 16px calc(var(--gutter) * -1);
+  /* mantém o conteúdo alinhado com o restante da página */
+  padding: 12px var(--gutter);
+  background-color: #00BFFF;
   text-align: center;
 }
+.faixa-secao span{
+  color: #fff; font-size: 22px; font-weight: bold;
+}
+
 .hint {
   font-size: 13px;
   color: #444;
@@ -275,6 +270,7 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
 
 
