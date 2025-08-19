@@ -249,7 +249,7 @@ canvas {
 .loader-text { font-size: 20px; color:#000; }
 
 .page-center{
-  min-height: 100svh;
+  min-height: 10svh;
   display: flex;
   flex-direction: column;
   justify-content: center;   /* centraliza vertical */
@@ -276,4 +276,5 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
 
