@@ -16,14 +16,9 @@ const REVIEW_FIELDS = [
   { id: 'nome',           label: 'Nome' },
   { id: 'email',          label: 'E-mail' },
   { id: 'telefone',       label: 'Telefone' },
-  { id: 'masterclass',    label: 'Master Class' },
-  { id: 'palco',          label: 'Dinâmica de Palco' },
   { id: 'empresa',        label: 'Empresa' },
   { id: 'site',           label: 'Site',    format: v => normalizeUrlMaybe(v) },
   { id: 'insta',          label: 'Instagram' },
-  { id: 'titulo',         label: 'Título' },
-  { id: 'descricao',      label: 'Descrição' },
-  { id: 'descricaolonga', label: 'Bio' }
   // Ex.: mostrar só o nome do arquivo:
   // { id: 'logo', label: 'Logo', format: () => document.getElementById('logo')?.files[0]?.name || '—' }
 ];
@@ -273,8 +268,6 @@ async function enviarParaGoogle() {
     nome: document.getElementById('nome').value,
     email: document.getElementById('email').value,
     telefone: document.getElementById('telefone').value,
-    masterclass: document.getElementById('masterclass').value,
-    palco: document.getElementById('palco').value,
     empresa: document.getElementById('empresa').value,
     site: document.getElementById('site').value,
     insta: document.getElementById('insta').value,
@@ -537,3 +530,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
