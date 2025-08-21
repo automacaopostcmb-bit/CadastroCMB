@@ -63,6 +63,15 @@ canvas {
   background: #fff;
 }
 
+#loading{
+  display: none;            /* começa oculto */
+  position: fixed;          /* cobre a tela toda */
+  inset: 0;                 /* top/right/bottom/left = 0 */
+  align-items: center;      /* centro vertical */
+  justify-content: center;  /* centro horizontal */
+  z-index: 9999;
+}
+
 /* Faixa azul com full-bleed (vai até a borda da tela) */
 .faixa-secao{
   /* puxa a faixa para fora do padding lateral do body */
@@ -323,5 +332,6 @@ canvas {
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
+
 
 
