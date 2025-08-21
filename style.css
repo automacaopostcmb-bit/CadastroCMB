@@ -2,66 +2,36 @@
    ESTILOS GERAIS / LAYOUT
    ========================= */
 
-/* Fundo com degradê vertical (fixo) para TODO o site */
-html, body { height: 100%; }
+/* Tamanho/overflow base */
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; overflow-x: hidden; }
 
-/* Evita scrollbar horizontal quando usamos margens negativas (full-bleed) */
-html { overflow-x: hidden; }
-
-/* Respiro lateral global */
+/* Respiro lateral global (gutter) */
 :root{
-  --gutter: clamp(12px, 4vw, 20px);  /* ajuste como quiser */
+  --gutter: clamp(12px, 4vw, 20px);
 }
 
-/* Rodapé full-bleed (pega de ponta a ponta) e “gruda” no fim da página */
-.site-footer{
-  /* compensa o padding lateral do body para a faixa ir até a borda */
-  margin: 24px calc(var(--gutter) * -1) 0;
-  background: #083a63;   /* mais escuro */
-  color: #fff;
-}
-
-/* Conteúdo centralizado com respiro */
-.site-footer .footer-inner{
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 14px var(--gutter);
-  text-align: center;
-  line-height: 1.5;
-}
-
-/* Links do rodapé */
-.site-footer a{
-  color: #fff;
-  text-decoration: underline;
-}
-.site-footer a:hover{ opacity: .9; }
-
-/* Conforto em celulares com “queixo”/notch */
-@supports (padding: env(safe-area-inset-bottom)) {
-  .site-footer .footer-inner{
-    padding-bottom: calc(14px + env(safe-area-inset-bottom));
-  }
-}
-
-
-/* Body com “respiro” nas laterais e sem padding vertical */
+/* Body: gradiente, respiro lateral e layout em coluna
+   -> permite rodapé "grudar" no fim */
 body{
   font-family: Arial, sans-serif;
   margin: 0;
   padding-block: 0;
-  padding-inline: var(--gutter);    /* ✅ respiro horizontal global */
+  padding-inline: var(--gutter);      /* respiro horizontal */
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+
   background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
   background-attachment: fixed;
 }
 
-/* Melhor controle de sizing */
-*, *::before, *::after { box-sizing: border-box; }
-
 h1, h2, h3 { text-align: center; margin: 0 0 14px 0; }
 
-/* Inputs / Textareas / Buttons padrão */
+/* =========================
+   COMPONENTES
+   ========================= */
+
 input, textarea, button {
   width: 100%;
   max-width: 420px;
@@ -88,12 +58,10 @@ canvas {
   background: #fff;
 }
 
-/* Faixa azul com full-bleed (vai até a borda da tela) */
+/* Faixa azul full-bleed */
 .faixa-secao{
-  /* puxa a faixa para fora do padding lateral do body */
-  margin: 16px calc(var(--gutter) * -1);
-  /* mantém o conteúdo alinhado com o restante da página */
-  padding: 12px var(--gutter);
+  margin: 16px calc(var(--gutter) * -1);  /* puxa até a borda da tela */
+  padding: 12px var(--gutter);            /* mantém alinhado ao conteúdo */
   background-color: #00BFFF;
   text-align: center;
 }
@@ -124,12 +92,13 @@ canvas {
 /* Mensagem geral */
 #mensagem { margin-top: 10px; font-weight: bold; text-align: center; }
 
+/* Responsivo básico */
 @media (min-width: 768px) {
   input, textarea, button, .link-voltar { max-width: 520px; }
   canvas { max-width: 640px; }
 }
 
-/* Aviso da etapa 5 (overflow/limites) */
+/* Aviso etapa 5 */
 #avisoTexto {
   color: #d93025;
   font-size: 13px;
@@ -143,7 +112,6 @@ canvas {
 .step { display: none; }
 .step.active { display: block; }
 
-/* Indicador "Etapa X de Y" */
 #wizard-indicator {
   text-align:center;
   font-size:14px;
@@ -151,7 +119,7 @@ canvas {
   color:#333;
 }
 
-/* Linha de botões sempre centralizada */
+/* Navegação do wizard */
 .button-row {
   display: flex;
   justify-content: center;
@@ -236,11 +204,7 @@ canvas {
   text-align: center;
 }
 .review-item { margin: 12px 0; }
-.review-label {
-  font-weight: 700;
-  display: block;
-  margin-bottom: 4px;
-}
+.review-label { font-weight: 700; display: block; margin-bottom: 4px; }
 .review-value { white-space: pre-wrap; color: #333; }
 
 /* Tela final pós-envio */
@@ -268,7 +232,7 @@ canvas {
   margin: 10px auto 0;
 }
 
-/* Overlay de carregamento */
+/* Overlay do wizard (se usar) */
 #overlay {
   display: none;
   position: fixed;
@@ -284,19 +248,25 @@ canvas {
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
 
-/* Wrapper central de páginas (login/wizard) */
+/* =========================
+   ESTRUTURA DE PÁGINA
+   ========================= */
+
+/* Wrapper central (login/wizard) ocupa o espaço disponível */
 .page-center{
-  min-height: calc(100svh - 0px); /* sem interferir no respiro do body */
-  display:flex; flex-direction:column;
-  justify-content:center; align-items:center;
+  flex: 1;                      /* empurra o rodapé para o fim */
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
   gap:12px;
-  padding: 24px 0; /* sem padding lateral aqui; o lateral já vem do body */
+  padding: 24px 0;              /* sem padding lateral; já vem do body */
 }
 
-/* Logo do topo (index e/ou outras páginas) */
+/* Logo do topo */
 .header-logo{
   display: block;
-  width: clamp(160px, 50vw, 280px); /* responsivo */
+  width: clamp(160px, 50vw, 280px);
   height: auto;
   margin: 0 auto 8px;
 }
@@ -307,3 +277,31 @@ canvas {
   max-width: 420px;
 }
 
+/* =========================
+   RODAPÉ FULL-BLEED
+   ========================= */
+
+.site-footer{
+  margin: 24px calc(var(--gutter) * -1) 0; /* leva a faixa até a borda da tela */
+  background: #083a63;
+  color: #fff;
+}
+.site-footer .footer-inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+  text-align: center;
+  line-height: 1.5;
+}
+.site-footer a{
+  color: #fff;
+  text-decoration: underline;
+}
+.site-footer a:hover{ opacity: .9; }
+
+/* Conforto em celulares com notch/queixo */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .site-footer .footer-inner{
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+}
