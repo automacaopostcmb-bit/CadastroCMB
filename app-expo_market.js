@@ -1,16 +1,17 @@
 /* =========================================================
-   CONFIGURAÇÃO
+   CONFIGURAÇÃO (edite aqui limites, campos de revisão, etc.)
    ========================================================= */
 const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame.png';
 
 const CHAR_LIMITS = {
-  titulo:    { min: 25,  max: 100  },
-  descricao: { min: 150, max: 230 }
+  titulo:    { min: 5,  max: 60  },  // Etapa 5
+  descricao: { min: 150, max: 250 }
 };
-const PHONE_ALLOWED_LENGTHS = [10, 11];
+const PHONE_ALLOWED_LENGTHS = [10, 11]; // DDD + número
 const EMAIL_REGEX  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 const INSTA_REGEX  = /^@?[a-zA-Z0-9._]{1,30}$/;
 
+// Campos exibidos na revisão (etapa 7)
 const REVIEW_FIELDS = [
   { id: 'nome',           label: 'Nome' },
   { id: 'email',          label: 'E-mail' },
@@ -23,13 +24,17 @@ const REVIEW_FIELDS = [
   { id: 'titulo',         label: 'Título' },
   { id: 'descricao',      label: 'Descrição' },
   { id: 'descricaolonga', label: 'Bio' }
+  // Ex.: mostrar só o nome do arquivo:
+  // { id: 'logo', label: 'Logo', format: () => document.getElementById('logo')?.files[0]?.name || '—' }
 ];
 
+// Mensagens combinadas da etapa 5 (char-limit + overflow)
 const step5Messages = { charError: '' };
+// Flag de overflow do canvas
 const validationFlags = { overflow: false };
 
 /* ===========================
-   HELPERS
+   HELPERS GERAIS / FORMATO
    =========================== */
 function showFieldError(inputId, msg) {
   const box = document.getElementById(inputId + 'Error');
@@ -77,6 +82,7 @@ function initCanvas() {
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
+  // Carrega moldura
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
@@ -92,6 +98,7 @@ function initCanvas() {
   };
   frameImg.src = FRAME_URL + '?v=' + Date.now();
 
+  // Uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
 
@@ -110,21 +117,25 @@ function initCanvas() {
     });
   }
 
+  // Controles do preview
   ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', gerarPost);
   });
 
+  // fonte
   document.fonts?.ready?.then(gerarPost);
 }
 
 function gerarPost() {
   if (!ctx) return;
 
+  // Fundo
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // Imagem de apoio
   if (lateralImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = 150, anchorPointY = 1000;
@@ -136,10 +147,12 @@ function gerarPost() {
     ctx.drawImage(lateralImg, drawX, drawY, w, h);
   }
 
+  // Moldura
   if (frameImg?.complete && frameImg.naturalWidth) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
+  // Logo centralizada
   if (logoImg) {
     const maxWidth = 500, maxHeight = 350;
     const scale = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
@@ -148,6 +161,7 @@ function gerarPost() {
     ctx.drawImage(logoImg, (canvas.width - width) / 2, centerY - height / 2, width, height);
   }
 
+  // Título
   const titulo = (document.getElementById('titulo').value || '').trim();
   ctx.font = 'bold 48px "Comic Relief"';
   ctx.fillStyle = '#FFFFFF';
@@ -162,9 +176,10 @@ function gerarPost() {
   let offsetY = (linhasTituloSlice.length === 1) ? 30 : 0;
   linhasTituloSlice.forEach((linha, i) => ctx.fillText(linha, tituloX, tituloYBase + i * 54 + offsetY));
 
+  // Descrição
   const descricao = (document.getElementById('descricao').value || '').trim();
   ctx.font = '28px "Comic Relief"';
-  ctx.fillStyle = '#333';
+  ctx.fillStyle = '#333333';
   const descricaoX = 400, descricaoY = 1050;
   const descricaoMaxWidth = 600, descricaoMaxLinhas = 5;
 
@@ -175,6 +190,7 @@ function gerarPost() {
   const linhasDescricao = todas.slice(0, descricaoMaxLinhas);
   linhasDescricao.forEach((linha, i) => ctx.fillText(linha, descricaoX, descricaoY + i * 40));
 
+  // Flags e aviso
   validationFlags.overflow = (ultrapassouTitulo || ultrapassouDescricao);
   updateStep5Warning();
   if (typeof revalidateStepNav === 'function') revalidateStepNav();
@@ -204,7 +220,7 @@ function baixarImagem() {
 }
 
 /* ===========================
-   ENVIO
+   ENVIO (Google Apps Script)
    =========================== */
 async function enviarParaGoogle() {
   const camposObrigatorios = [
@@ -304,7 +320,7 @@ async function enviarParaGoogle() {
 /* ===========================
    AUTENTICAÇÃO (Apps Script)
    =========================== */
-const AUTH_API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
 const PAGINA  = "expo_market";
 async function checkAuth() {
   const chave = (localStorage.getItem("chave") || "").trim();
@@ -313,7 +329,7 @@ async function checkAuth() {
     window.location.href = "index.html";
     return;
   }
-  const resp = await fetch(`${AUTH_API_URL}?chave=${encodeURIComponent(chave)}&pagina=${encodeURIComponent(PAGINA)}`);
+  const resp = await fetch(`${API_URL}?chave=${encodeURIComponent(chave)}&pagina=${encodeURIComponent(PAGINA)}`);
   const data = await resp.json();
   if (!data.permitido) {
     alert("Você não tem permissão para acessar esta página.");
@@ -333,7 +349,7 @@ const REQUIRED_BY_STEP = {
   6: ['descricaolonga'],
   7: []
 };
-const GLOBAL_VALIDATORS = [];
+const GLOBAL_VALIDATORS = [ /* se quiser, adicione validadores para todas as etapas */ ];
 
 const STEP_VALIDATORS = {
   2: () => {
@@ -416,6 +432,7 @@ function validateStep(stepNumber) {
 
   return true;
 }
+// Sempre valida (mesmo sem “Próximo”) — etapa 7 precisa disso para montar a revisão
 function revalidateStepNav() {
   const activeStep = steps[currentStep - 1];
   const isValid = validateStep(currentStep);
@@ -431,7 +448,12 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-  if (currentStep === 7) { try { buildReview(); } catch (e) {} }
+
+  // Monta revisão ao entrar na etapa 7
+  if (currentStep === 7) {
+    try { buildReview(); } catch (e) { console.error('buildReview error', e); }
+  }
+
   updateIndicator();
   revalidateStepNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -462,20 +484,26 @@ function buildReview() {
 }
 
 /* ===========================
-   MENU: voltar para index
+   MENU: voltar para index.html?back=1
    =========================== */
 function goToMenu() {
-  const base = location.href.replace(/[^/]+$/, '');
+  // monta URL relativa para o index na MESMA pasta do arquivo atual
+  const base = location.href.replace(/[^/]+$/, ''); // remove o nome do arquivo atual
   window.location.href = base + 'index.html?back=1';
 }
 
 /* ===========================
-   BOOTSTRAP
+   BOOTSTRAP DA PÁGINA (com GUARD)
    =========================== */
 document.addEventListener('DOMContentLoaded', () => {
+  // ✅ Só roda o wizard se a página tiver os elementos do wizard
   const isWizardPage = !!document.querySelector('.step') && !!document.getElementById('wizard-indicator');
-  if (!isWizardPage) return;
+  if (!isWizardPage) {
+    // Ex.: estamos no index.html (login) → não inicializa nada daqui
+    return;
+  }
 
+  // máscara do telefone
   const telEl = document.getElementById('telefone');
   if (telEl) {
     telEl.addEventListener('input', (e) => {
@@ -485,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initCanvas();
-  checkAuth();
+  checkAuth(); // exige chave válida para abrir a página
 
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
