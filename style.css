@@ -10,16 +10,18 @@ html { overflow-x: hidden; }
 
 /* Respiro lateral global */
 :root{
-  --gutter: clamp(12px, 4vw, 20px);  /* ajuste como quiser */
+  --gutter: clamp(12px, 4vw, 20px);
 }
 
-/* Body com “respiro” nas laterais e sem padding vertical
-   + flex para permitir rodapé sticky no fim */
+/* Classe utilitária para esconder com prioridade */
+.is-hidden { display: none !important; }
+
+/* Body com “respiro” nas laterais e sem padding vertical + flex pro rodapé sticky */
 body{
   font-family: Arial, sans-serif;
   margin: 0;
   padding-block: 0;
-  padding-inline: var(--gutter);    /* ✅ respiro horizontal global */
+  padding-inline: var(--gutter);
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -65,9 +67,7 @@ canvas {
 
 /* Faixa azul com full-bleed (vai até a borda da tela) */
 .faixa-secao{
-  /* puxa a faixa para fora do padding lateral do body */
   margin: 16px calc(var(--gutter) * -1);
-  /* mantém o conteúdo alinhado com o restante da página */
   padding: 12px var(--gutter);
   background-color: #00BFFF;
   text-align: center;
@@ -243,7 +243,7 @@ canvas {
   margin: 10px auto 0;
 }
 
-/* Overlay de carregamento */
+/* Overlay de carregamento do wizard (outras páginas) */
 #overlay {
   display: none;
   position: fixed;
@@ -263,67 +263,57 @@ canvas {
    ESTRUTURA DE PÁGINA
    ========================= */
 
-/* Wrapper central de páginas (login/wizard).
-   Fica entre o topo e o rodapé, e “cresce” para empurrar o rodapé pro fim. */
 .page-center{
-  flex: 1;                   /* ocupa o espaço disponível */
-  min-height: auto;          /* não força altura além da viewport */
+  flex: 1;
+  min-height: auto;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
   gap:12px;
-  padding: 24px 0;           /* sem padding lateral aqui; o lateral já vem do body */
+  padding: 24px 0;
+  transform: translateY(var(--center-offset, 0)); /* permite ajuste fino */
+  will-change: transform;
 }
 
-/* Logo do topo (index e/ou outras páginas) */
+/* Logo do topo */
 .header-logo{
   display: block;
-  width: clamp(160px, 50vw, 280px); /* responsivo */
+  width: clamp(160px, 50vw, 280px);
   height: auto;
   margin: 0 auto 8px;
 }
 
-/* Largura dos blocos do login/menu/loading */
-#login-area, #menu, #loading{
+/* Largura dos blocos do login/menu (REMOVIDO #loading daqui) */
+#login-area, #menu{
   width: 100%;
   max-width: 420px;
 }
 
-/* body já está display:flex; flex-direction:column; (mantém) */
-/* .page-center já tem flex:1 no CSS que te passei */
-
 /* Rodapé full-bleed sticky */
 .site-footer{
-  /* leva a faixa até a borda da tela (compensa o padding lateral do body) */
   margin: 24px calc(var(--gutter) * -1) 0;
   background: #083a63;
   color: #fff;
 }
 
-/* Conteúdo do rodapé centralizado e com respiro */
+/* Conteúdo do rodapé */
 .site-footer .footer-inner{
   max-width: 1200px;
   margin: 0 auto;
   padding: 14px var(--gutter);
-  text-align: center;           /* troque para left se preferir à esquerda */
+  text-align: center;
   line-height: 1.5;
 }
 
-/* Links no rodapé */
 .site-footer a{
   color: #fff;
   text-decoration: underline;
 }
 .site-footer a:hover{ opacity: .9; }
 
-/* (Opcional) conforto em celulares com “queixo”/notch */
 @supports (padding: env(safe-area-inset-bottom)) {
   .site-footer .footer-inner{
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
-
-
-
-
