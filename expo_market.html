@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gerador de Post</title>
 
   <!-- Fonte usada no canvas -->
@@ -13,202 +13,196 @@
 </head>
 
 <body>
-  <!-- Link de retorno (escondido na tela final) -->
-  <a class="link-voltar" id="link-topo" href="index.html?back=1">Voltar/Menu</a>
+  <!-- CONTEÚDO PRINCIPAL (cresce e empurra o rodapé) -->
+  <main class="page-center">
+    <!-- Link de retorno (escondido na tela final) -->
+    <a class="link-voltar" id="link-topo" href="index.html?back=1">Voltar/Menu</a>
 
-  <!-- Indicador da etapa -->
-  <div id="wizard-indicator">Etapa 1 de 7</div>
+    <!-- Indicador da etapa -->
+    <div id="wizard-indicator">Etapa 1 de 7</div>
 
-  <!-- ========== ETAPA 1 — INTRODUÇÃO (APENAS PRÓXIMO) ========== -->
-  <section class="step active" id="step1">
-    <div class="faixa-secao"><span>Boas-vindas</span></div>
+    <!-- ========== ETAPA 1 — INTRODUÇÃO (APENAS PRÓXIMO) ========== -->
+    <section class="step active" id="step1">
+      <div class="faixa-secao"><span>Boas-vindas</span></div>
 
-    <div id="intro-content" class="intro-box">
-      <h2>Bem-vindo(a) ao Gerador de Post do Comic Learning 🎉</h2>
-      <p>
-        Preencha seus dados e envie os arquivos. No fim, você poderá fazer o
-        download da imagem gerada. Se o texto do <strong>Preview</strong> extrapolar a área,
-        um aviso aparecerá e o botão <em>Próximo</em> ficará desabilitado até você ajustar.
-      </p>
-      <p>Clique em <strong>Próximo</strong> para começar!</p>
+      <div id="intro-content" class="intro-box">
+        <h2>Bem-vindo(a) ao Gerador de Post do Comic Learning 🎉</h2>
+        <p>
+          Preencha seus dados e envie os arquivos. No fim, você poderá fazer o
+          download da imagem gerada. Se o texto do <strong>Preview</strong> extrapolar a área,
+          um aviso aparecerá e o botão <em>Próximo</em> ficará desabilitado até você ajustar.
+        </p>
+        <p>Clique em <strong>Próximo</strong> para começar!</p>
+      </div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 2 — SOBRE VOCÊ ========== -->
+    <section class="step" id="step2">
+      <div class="faixa-secao"><span>Sobre você:</span></div>
+
+      <label class="title-label">Seu nome:</label>
+      <input type="text" id="nome" placeholder="" />
+
+      <label class="title-label">E-mail:</label>
+      <input type="email" id="email" placeholder="seu@email.com" />
+      <div id="emailError" class="inline-error"></div>
+
+      <label class="title-label">Número de telefone</label>
+      <input type="tel" id="telefone" placeholder="(00) 00000-0000" />
+      <div id="telefoneError" class="inline-error"></div>
+
+      <label class="title-label">Vai ministrar alguma Master Class no Comic Learning?</label>
+      <div class="hint">(Se sim, digite o nome da aula, se não deixe vazio)</div>
+      <input type="text" id="masterclass" placeholder="" />
+
+      <label class="title-label">Vai fazer alguma dinâmica no palco?</label>
+      <div class="hint">(Se sim, digite o nome da dinâmica, se não deixe vazio)</div>
+      <input type="text" id="palco" placeholder="" />
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 3 — EMPRESA ========== -->
+    <section class="step" id="step3">
+      <div class="faixa-secao"><span>Sobre sua empresa:</span></div>
+
+      <label class="title-label">Nome da sua empresa:</label>
+      <input type="text" id="empresa" placeholder="" />
+
+      <label class="title-label">Site:</label>
+      <div class="hint">(Cole o link do seu site)</div>
+      <input type="text" id="site" placeholder="" />
+      <div id="siteError" class="inline-error"></div>
+
+      <label class="title-label">Instagram:</label>
+      <div class="hint">(Escreva o seu @, não o link)</div>
+      <input type="text" id="insta" placeholder="@" />
+      <div id="instaError" class="inline-error"></div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 4 — IMAGENS (UPLOADS) ========== -->
+    <section class="step" id="step4">
+      <div class="faixa-secao"><span>Imagens</span></div>
+
+      <label class="title-label">Envie o seu Logo:</label>
+      <div class="hint">(Use uma imagem com fundo transparente)</div>
+      <input type="file" id="logo" accept="image/*" />
+
+      <label class="title-label">Escolha uma imagem de apoio:</label>
+      <div class="hint">(Qual outra imagem poderíamos usar para mostrar mais de você?)</div>
+      <input type="file" id="lateral" accept="image/*" />
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 5 — PREVIEW / TÍTULO / DESCRIÇÃO ========== -->
+    <section class="step" id="step5">
+      <div class="faixa-secao"><span>Vamos criar a sua divulgação!</span></div>
+
+      <label class="title-label">Tamanho da imagem de apoio</label>
+      <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
+
+      <label class="title-label">Mover horizontalmente</label>
+      <input type="range" id="imgX" min="-500" max="500" value="0" />
+
+      <label class="title-label">Mover verticalmente</label>
+      <input type="range" id="imgY" min="-500" max="500" value="0" />
+
+      <canvas id="canvas" width="1080" height="1350"></canvas>
+
+      <div id="avisoTexto"></div>
+
+      <label class="title-label">Aqui é o seu título! Nos diga, o que você faz?</label>
+      <div class="hint">(Pense como se fosse um título chamativo do seu trabalho)</div>
+      <input type="text" id="titulo" placeholder="Título" />
+
+      <label class="title-label">Descreva um pouco mais</label>
+      <textarea id="descricao" rows="4" placeholder=""></textarea>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 6 — BIO (SEM ENVIAR) ========== -->
+    <section class="step" id="step6">
+      <label class="title-label">Escreva a sua Bio</label>
+      <div class="hint">(Aqui não tem limite de caracteres. Vamos usar essas informações para divulgação)</div>
+      <textarea id="descricaolonga" rows="8" placeholder=""></textarea>
+
+      <label class="title-label">Tem alguma outra imagem para nos mandar?</label>
+      <div class="hint">(Pode ser uma arte, uma foto sua em outro evento... Fique à vontade!)</div>
+      <input type="file" id="background" accept="image/*" />
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 7 — REVISÃO + ENVIAR ========== -->
+    <section class="step" id="step7">
+      <div class="faixa-secao"><span>Confira suas informações</span></div>
+
+      <!-- Lista gerada via JS a partir de REVIEW_FIELDS -->
+      <div id="review-list" class="review-box"></div>
+
+      <!-- Mensagens de envio -->
+      <div id="mensagem"></div>
+
+      <!-- Botões: Voltar + Enviar (não tem "Próximo") -->
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" id="botao-enviar" onclick="enviarParaGoogle()">Enviar informações</button>
+      </div>
+    </section>
+
+    <!-- ========== TELA FINAL (PÓS-ENVIO) ========== -->
+    <section id="final-screen" class="final-screen">
+      <div class="final-card">
+        <h2>✅ Enviado com sucesso!</h2>
+        <p>Obrigado por enviar suas informações. Você já pode baixar a imagem.</p>
+
+        <button class="btn-download" id="btn-final-download" onclick="baixarImagem()">Baixar Imagem</button>
+        <button class="btn-menu" id="btn-menu" onclick="goToMenu()">Menu</button>
+      </div>
+    </section>
+
+    <!-- Overlay "Enviando..." com GIF -->
+    <div id="overlay">
+      <div class="loader">
+        <img src="assets/loading.gif" alt="Carregando" class="loader-gif">
+        <div class="loader-text">Enviando...</div>
+      </div>
     </div>
-
-    <div class="button-row">
-      <button class="btn-nav btn-proximo" data-next>Próximo</button>
-    </div>
-  </section>
-
-  <!-- ========== ETAPA 2 — SOBRE VOCÊ ========== -->
-  <section class="step" id="step2">
-    <div class="faixa-secao"><span>Sobre você:</span></div>
-
-    <label class="title-label">Seu nome:</label>
-    <input type="text" id="nome" placeholder="" />
-
-    <label class="title-label">E-mail:</label>
-    <input type="email" id="email" placeholder="seu@email.com" />
-    <div id="emailError" class="inline-error"></div>
-
-    <label class="title-label">Número de telefone</label>
-    <input type="tel" id="telefone" placeholder="(00) 00000-0000" />
-    <div id="telefoneError" class="inline-error"></div>
-
-    <label class="title-label">Vai ministrar alguma Master Class no Comic Learning?</label>
-    <div class="hint">(Se sim, digite o nome da aula, se não deixe vazio)</div>
-    <input type="text" id="masterclass" placeholder="" />
-
-    <label class="title-label">Vai fazer alguma dinâmica no palco?</label>
-    <div class="hint">(Se sim, digite o nome da dinâmica, se não deixe vazio)</div>
-    <input type="text" id="palco" placeholder="" />
-
-    <div class="button-row">
-      <button class="btn-nav btn-voltar" data-prev>Voltar</button>
-      <button class="btn-nav btn-proximo" data-next>Próximo</button>
-    </div>
-  </section>
-
-  <!-- ========== ETAPA 3 — EMPRESA ========== -->
-  <section class="step" id="step3">
-    <div class="faixa-secao"><span>Sobre sua empresa:</span></div>
-
-    <label class="title-label">Nome da sua empresa:</label>
-    <input type="text" id="empresa" placeholder="" />
-
-    <label class="title-label">Site:</label>
-    <div class="hint">(Cole o link do seu site)</div>
-    <input type="text" id="site" placeholder="" />
-    <div id="siteError" class="inline-error"></div>
-
-    <label class="title-label">Instagram:</label>
-    <div class="hint">(Escreva o seu @, não o link)</div>
-    <input type="text" id="insta" placeholder="@" />
-    <div id="instaError" class="inline-error"></div>
-
-    <div class="button-row">
-      <button class="btn-nav btn-voltar" data-prev>Voltar</button>
-      <button class="btn-nav btn-proximo" data-next>Próximo</button>
-    </div>
-  </section>
-
-  <!-- ========== ETAPA 4 — IMAGENS (UPLOADS) ========== -->
-  <section class="step" id="step4">
-    <div class="faixa-secao"><span>Imagens</span></div>
-
-    <label class="title-label">Envie o seu Logo:</label>
-    <div class="hint">(Use uma imagem com fundo transparente)</div>
-    <input type="file" id="logo" accept="image/*" />
-
-    <label class="title-label">Escolha uma imagem de apoio:</label>
-    <div class="hint">(Qual outra imagem poderíamos usar para mostrar mais de você?)</div>
-    <input type="file" id="lateral" accept="image/*" />
-
-    <div class="button-row">
-      <button class="btn-nav btn-voltar" data-prev>Voltar</button>
-      <button class="btn-nav btn-proximo" data-next>Próximo</button>
-    </div>
-  </section>
-
-  <!-- ========== ETAPA 5 — PREVIEW / TÍTULO / DESCRIÇÃO ========== -->
-  <section class="step" id="step5">
-    <div class="faixa-secao"><span>Vamos criar a sua divulgação!</span></div>
-
-    <label class="title-label">Tamanho da imagem de apoio</label>
-    <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
-
-    <label class="title-label">Mover horizontalmente</label>
-    <input type="range" id="imgX" min="-500" max="500" value="0" />
-
-    <label class="title-label">Mover verticalmente</label>
-    <input type="range" id="imgY" min="-500" max="500" value="0" />
-
-    <canvas id="canvas" width="1080" height="1350"></canvas>
-
-    <div id="avisoTexto"></div>
-
-    <label class="title-label">Aqui é o seu título! Nos diga, o que você faz?</label>
-    <div class="hint">(Pense como se fosse um título chamativo do seu trabalho)</div>
-    <input type="text" id="titulo" placeholder="Título" />
-
-    <label class="title-label">Descreva um pouco mais</label>
-    <textarea id="descricao" rows="4" placeholder=""></textarea>
-
-    <div class="button-row">
-      <button class="btn-nav btn-voltar" data-prev>Voltar</button>
-      <button class="btn-nav btn-proximo" data-next>Próximo</button>
-    </div>
-  </section>
-
-  <!-- ========== ETAPA 6 — BIO (SEM ENVIAR) ========== -->
-  <section class="step" id="step6">
-    <label class="title-label">Escreva a sua Bio</label>
-    <div class="hint">(Aqui não tem limite de caracteres. Vamos usar essas informações para divulgação)</div>
-    <textarea id="descricaolonga" rows="8" placeholder=""></textarea>
-
-    <label class="title-label">Tem alguma outra imagem para nos mandar?</label>
-    <div class="hint">(Pode ser uma arte, uma foto sua em outro evento... Fique à vontade!)</div>
-    <input type="file" id="background" accept="image/*" />
-
-    <div class="button-row">
-      <button class="btn-nav btn-voltar" data-prev>Voltar</button>
-      <button class="btn-nav btn-proximo" data-next>Próximo</button>
-    </div>
-  </section>
-
-  <!-- ========== ETAPA 7 — REVISÃO + ENVIAR ========== -->
-  <section class="step" id="step7">
-    <div class="faixa-secao"><span>Confira suas informações</span></div>
-
-    <!-- Lista gerada via JS a partir de REVIEW_FIELDS -->
-    <div id="review-list" class="review-box"></div>
-
-    <!-- Mensagens de envio -->
-    <div id="mensagem"></div>
-
-    <!-- Botões: Voltar + Enviar (não tem "Próximo") -->
-    <div class="button-row">
-      <button class="btn-nav btn-voltar" data-prev>Voltar</button>
-      <button class="btn-nav btn-proximo" id="botao-enviar" onclick="enviarParaGoogle()">Enviar informações</button>
-    </div>
-  </section>
-
-  <!-- ========== TELA FINAL (PÓS-ENVIO) ========== -->
-  <section id="final-screen" class="final-screen">
-    <div class="final-card">
-      <h2>✅ Enviado com sucesso!</h2>
-      <p>Obrigado por enviar suas informações. Você já pode baixar a imagem.</p>
-
-      <button class="btn-download" id="btn-final-download" onclick="baixarImagem()">Baixar Imagem</button>
-      <button class="btn-menu" id="btn-menu" onclick="goToMenu()">Menu</button>
-    </div>
-  </section>
-
-  <!-- Overlay "Enviando..." com GIF -->
-  <div id="overlay">
-    <div class="loader">
-      <!-- troque o caminho se quiser -->
-      <img src="assets/loading.gif" alt="Carregando" class="loader-gif">
-      <div class="loader-text">Enviando...</div>
-    </div>
-  </div>
+  </main>
 
   <!-- JS externo -->
   <script src="app-expo_market.js?v=1"></script>
 
+  <!-- RODAPÉ (fora do main, gruda no fim) -->
   <footer class="site-footer">
-  <div class="footer-inner">
-    <strong>Criado por Bruno Lima • </strong>
-    <a href="mailto:limasketch@gmail.com">Implemente no seu evento.</a>
-    <small>© 2025 Automatic Post. Todos os direitos reservados.</small>
-  </div>
-</footer>
-  
+    <div class="footer-inner">
+      <strong>Criado por Bruno Lima • </strong>
+      <a href="mailto:limasketch@gmail.com">Implemente no seu evento.</a>
+      <small>© 2025 Automatic Post. Todos os direitos reservados.</small>
+    </div>
+  </footer>
 </body>
 </html>
-
-
-
-
-
-
-
-
