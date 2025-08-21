@@ -281,10 +281,32 @@ canvas {
   margin: 0 auto 8px;
 }
 
-/* Largura dos blocos do login/menu/loading */
-#login-area, #menu, #loading{
+/* Largura dos blocos de conteúdo (NÃO inclui o overlay #loading) */
+#login-area, #menu{
   width: 100%;
   max-width: 420px;
+}
+
+/* Overlay de loading do index: cobre a tela toda */
+#loading{
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  max-width: none;
+  display: none;           /* o JS alterna para 'block' ou 'grid' */
+  place-items: center;     /* se usar display:grid */
+  background: rgba(255,255,255,.35);
+  z-index: 9999;
+}
+#loading > *{
+  margin: 0;
+  padding: 12px 16px;
+  background: #fff;
+  border-radius: 10px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0,0,0,.15);
+  color: #000;
 }
 
 /* =========================
@@ -315,5 +337,3 @@ canvas {
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
-
-
