@@ -174,15 +174,15 @@ canvas {
 #loading{
   position:fixed;
   inset:0;
-  width:100svw;
+  width:100svw;           /* viewport real em mobile */
   height:100svh;
-  max-width:none !important;   /* impede travar em 420px por CSS antigo */
+  max-width:none !important;   /* impede travar em 420px */
   display:none;                /* o JS liga/desliga */
-  place-items:center;          /* centraliza quando display:grid */
+  place-items:center;          /* centraliza quando vira grid */
   background:rgba(255,255,255,.35);
-  z-index:9999;
+  z-index:10000;
 }
-#loading p{
+#loading .loading-bubble{
   margin:0;
   padding:12px 16px;
   background:#fff;
