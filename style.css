@@ -13,6 +13,38 @@ html { overflow-x: hidden; }
   --gutter: clamp(12px, 4vw, 20px);  /* ajuste como quiser */
 }
 
+/* Rodapé full-bleed (pega de ponta a ponta) e “gruda” no fim da página */
+.site-footer{
+  /* compensa o padding lateral do body para a faixa ir até a borda */
+  margin: 24px calc(var(--gutter) * -1) 0;
+  background: #083a63;   /* mais escuro */
+  color: #fff;
+}
+
+/* Conteúdo centralizado com respiro */
+.site-footer .footer-inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Links do rodapé */
+.site-footer a{
+  color: #fff;
+  text-decoration: underline;
+}
+.site-footer a:hover{ opacity: .9; }
+
+/* Conforto em celulares com “queixo”/notch */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .site-footer .footer-inner{
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+}
+
+
 /* Body com “respiro” nas laterais e sem padding vertical */
 body{
   font-family: Arial, sans-serif;
@@ -274,3 +306,4 @@ canvas {
   width: 100%;
   max-width: 420px;
 }
+
