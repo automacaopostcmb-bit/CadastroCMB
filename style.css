@@ -10,22 +10,16 @@ html { overflow-x: hidden; }
 
 /* Respiro lateral global */
 :root{
-  --gutter: clamp(12px, 4vw, 20px);
+  --gutter: clamp(12px, 4vw, 20px);  /* ajuste como quiser */
 }
 
-/* Classe utilitária para esconder com prioridade */
-.is-hidden { display: none !important; }
-
-/* Body com “respiro” nas laterais e sem padding vertical + flex pro rodapé sticky */
+/* Body com “respiro” nas laterais e sem padding vertical */
 body{
   font-family: Arial, sans-serif;
   margin: 0;
   padding-block: 0;
-  padding-inline: var(--gutter);
+  padding-inline: var(--gutter);    /* ✅ respiro horizontal global */
   min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-
   background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
   background-attachment: fixed;
 }
@@ -35,10 +29,7 @@ body{
 
 h1, h2, h3 { text-align: center; margin: 0 0 14px 0; }
 
-/* =========================
-   FORM / COMPONENTES
-   ========================= */
-
+/* Inputs / Textareas / Buttons padrão */
 input, textarea, button {
   width: 100%;
   max-width: 420px;
@@ -67,7 +58,9 @@ canvas {
 
 /* Faixa azul com full-bleed (vai até a borda da tela) */
 .faixa-secao{
+  /* puxa a faixa para fora do padding lateral do body */
   margin: 16px calc(var(--gutter) * -1);
+  /* mantém o conteúdo alinhado com o restante da página */
   padding: 12px var(--gutter);
   background-color: #00BFFF;
   text-align: center;
@@ -243,7 +236,7 @@ canvas {
   margin: 10px auto 0;
 }
 
-/* Overlay de carregamento do wizard (outras páginas) */
+/* Overlay de carregamento */
 #overlay {
   display: none;
   position: fixed;
@@ -259,61 +252,25 @@ canvas {
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
 
-/* =========================
-   ESTRUTURA DE PÁGINA
-   ========================= */
-
+/* Wrapper central de páginas (login/wizard) */
 .page-center{
-  flex: 1;
-  min-height: auto;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+  min-height: calc(100svh - 0px); /* sem interferir no respiro do body */
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
   gap:12px;
-  padding: 24px 0;
-  transform: translateY(var(--center-offset, 0)); /* permite ajuste fino */
-  will-change: transform;
+  padding: 24px 0; /* sem padding lateral aqui; o lateral já vem do body */
 }
 
-/* Logo do topo */
+/* Logo do topo (index e/ou outras páginas) */
 .header-logo{
   display: block;
-  width: clamp(160px, 50vw, 280px);
+  width: clamp(160px, 50vw, 280px); /* responsivo */
   height: auto;
   margin: 0 auto 8px;
 }
 
-/* Largura dos blocos do login/menu (REMOVIDO #loading daqui) */
-#login-area, #menu{
+/* Largura dos blocos do login/menu/loading */
+#login-area, #menu, #loading{
   width: 100%;
   max-width: 420px;
-}
-
-/* Rodapé full-bleed sticky */
-.site-footer{
-  margin: 24px calc(var(--gutter) * -1) 0;
-  background: #083a63;
-  color: #fff;
-}
-
-/* Conteúdo do rodapé */
-.site-footer .footer-inner{
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 14px var(--gutter);
-  text-align: center;
-  line-height: 1.5;
-}
-
-.site-footer a{
-  color: #fff;
-  text-decoration: underline;
-}
-.site-footer a:hover{ opacity: .9; }
-
-@supports (padding: env(safe-area-inset-bottom)) {
-  .site-footer .footer-inner{
-    padding-bottom: calc(14px + env(safe-area-inset-bottom));
-  }
 }
