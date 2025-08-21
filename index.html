@@ -6,7 +6,7 @@
   <title>Cadastro de expositores CMB</title>
 
   <!-- CSS global (bump de cache com v=9) -->
-  <link rel="stylesheet" href="style.css?v=23">
+  <link rel="stylesheet" href="style.css?v=24">
 
   <!-- Deixe o body básico; todo o layout é controlado pela .page-center no style.css -->
   <style>
@@ -28,7 +28,28 @@
     </div>
 
  
- <!-- Loading --> <div id="loading" style="display:none;"><p>Carregando páginas…</p></div>
+ <!-- Loading -->
+  <!-- Overlay de loading (centralizado) -->
+<div id="loading" style="
+  position: fixed;
+  inset: 0;                 /* cobre a tela toda */
+  display: none;            /* JS troca para 'grid' ao mostrar */
+  place-items: center;      /* centraliza vertical/horizontal */
+  background: rgba(255,255,255,.35); /* leve véu */
+  z-index: 9999;
+">
+  <div style="
+    margin: 0;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 10px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    color: #000;
+  ">
+    Carregando páginas…
+  </div>
+</div>
   
 
     <!-- Menu -->
@@ -119,7 +140,7 @@ async function carregarMenu() {
 titulo.style.display = "none";
 loginAr.style.display = "none";
 menu.style.display = "none";
-loading.style.display = "block";   // 🔴 TROCAR ESTA LINHA
+loading.style.display = "grid";
 
 
   try {
@@ -183,6 +204,7 @@ loading.style.display = "block";   // 🔴 TROCAR ESTA LINHA
   
 </body>
 </html>
+
 
 
 
