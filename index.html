@@ -5,19 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cadastro de expositores CMB</title>
 
-  <!-- CSS global (bump de cache com v=9) -->
-  <link rel="stylesheet" href="style.css?v=25">
+  <!-- CSS global -->
+  <link rel="stylesheet" href="style.css?v=27">
 
-  <!-- Deixe o body básico; todo o layout é controlado pela .page-center no style.css -->
+  <!-- body básico -->
   <style>
     html, body { height: 100%; }
     body { margin: 0; }
   </style>
 </head>
 <body>
-  <!-- Wrapper que centraliza vertical/horizontal.
-       Use --center-shift para subir/descer (negativo = sobe). -->
-<div class="page-center" style="--center-offset: -60px;">
+  <!-- Wrapper central (pode ajustar com --center-offset) -->
+  <div class="page-center" style="--center-offset: -60px;">
     <img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo">
 
     <h2 id="tituloLogin">Login</h2>
@@ -27,210 +26,178 @@
       <button id="btnEntrar" onclick="login()">Entrar</button>
     </div>
 
- 
- <!-- Loading -->
-  <!-- Overlay de loading (centralizado) -->
-<div id="loading" style="
-  position: fixed;
-  inset: 0;                 /* cobre a tela toda */
-  display: none;            /* JS troca para 'grid' ao mostrar */
-  place-items: center;      /* centraliza vertical/horizontal */
-  background: rgba(255,255,255,.35); /* leve véu */
-  z-index: 9999;
-">
-  <div style="
-    margin: 0;
-    padding: 12px 16px;
-    background: #fff;
-    border-radius: 10px;
-    font-weight: 700;
-    box-shadow: 0 6px 18px rgba(0,0,0,.15);
-    color: #000;
-  ">
-    Carregando páginas…
-  </div>
-</div>
-  
+    <!-- Overlay de loading (centralizado) -->
+    <div id="loading" class="is-hidden" style="
+      position: fixed;
+      inset: 0;
+      display: grid;          /* fica grid sempre; quem controla visibilidade é a classe .is-hidden */
+      place-items: center;
+      background: rgba(255,255,255,.35);
+      z-index: 9999;
+    ">
+      <div style="
+        margin: 0;
+        padding: 12px 16px;
+        background: #fff;
+        border-radius: 10px;
+        font-weight: 700;
+        box-shadow: 0 6px 18px rgba(0,0,0,.15);
+        color: #000;
+      ">
+        Carregando páginas…
+      </div>
+    </div>
 
     <!-- Menu -->
-    <div id="menu" style="display:none;">
+    <div id="menu" hidden>
       <h3>Páginas disponíveis</h3>
       <div id="botoes"></div>
       <p id="linkSair" onclick="logout()" style="cursor:pointer; color:#007bff; text-align:center; font-size:14px; margin-top:16px;">Sair</p>
     </div>
   </div>
 
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
+  <script>
+  // --- Helpers visuais robustos ---
+  const $ = (id) => document.getElementById(id);
+  const hide = (el) => { if (!el) return; el.hidden = true; el.classList?.add('is-hidden'); };
+  const show = (el) => { if (!el) return; el.hidden = false; el.classList?.remove('is-hidden'); };
 
-const paginas = [
-  {nome: "area_artistas",        label: "Área dos Artistas"},
-  {nome: "expo_business",        label: "Expositor Área Business"},
-  {nome: "expo_market",          label: "Expositor Área Market"},
-  {nome: "cadastro_masterclass", label: "Cadastro Masterclass"},
-  {nome: "cadastro_lancamento",  label: "Cadastro de Lançamento"},
-];
+  const AUTH_API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
 
-let isLoading = false;
+  const paginas = [
+    {nome: "area_artistas",        label: "Área dos Artistas"},
+    {nome: "expo_business",        label: "Expositor Área Business"},
+    {nome: "expo_market",          label: "Expositor Área Market"},
+    {nome: "cadastro_masterclass", label: "Cadastro Masterclass"},
+    {nome: "cadastro_lancamento",  label: "Cadastro de Lançamento"},
+  ];
 
-function setLoading(state) {
-  isLoading = state;
-  const btn = document.getElementById("btnEntrar");
-  if (btn) {
-    btn.disabled = state;
-    btn.textContent = state ? "Carregando..." : "Entrar";
-  }
-}
+  let isLoading = false;
 
-document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const isBack = params.get("back") === "1";
-  const chave = (localStorage.getItem("chave") || "").trim();
-
-  if (isBack && chave) {
-    document.getElementById("tituloLogin").style.display = "none";
-    document.getElementById("login-area").style.display = "none";
-    carregarMenu();
-  } else {
-    // acesso “frio” — exige login
-    localStorage.removeItem("chave");
-    document.getElementById("menu").style.display = "none";
-    document.getElementById("botoes").innerHTML = "";
-    document.getElementById("chave").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") login();
-    });
-  }
-});
-
-function login() {
-  const chave = document.getElementById("chave").value.trim();
-  if (!chave) return alert("Digite sua chave.");
-  localStorage.setItem("chave", chave);
-  carregarMenu();
-}
-
-function logout() {
-  localStorage.removeItem("chave");
-  setLoading(false);
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("botoes").innerHTML = "";
-  document.getElementById("chave").value = "";
-  document.getElementById("tituloLogin").style.display = "block";
-  document.getElementById("login-area").style.display = "block";
-  if (window.location.search.includes("back=1")) {
-    window.history.replaceState({}, "", "index.html");
-  }
-}
-
-async function carregarMenu() {
-  if (isLoading) return;
-  const chave = localStorage.getItem("chave");
-  if (!chave) return;
-
-  setLoading(true);
-
-  const titulo  = document.getElementById("tituloLogin");
-  const loginAr = document.getElementById("login-area");
-  const menu    = document.getElementById("menu");
-  const area    = document.getElementById("botoes");
-  const loading = document.getElementById("loading");
-
-  // só loading na tela
-
-titulo.style.display = "none";
-loginAr.style.display = "none";
-menu.style.display = "none";
-loading.style.display = "grid";
-
-
-  try {
-    // UMA chamada: retorna todas as permissões da chave
-    const resp = await fetch(`${API_URL}?chave=${encodeURIComponent(chave)}`);
-    const data = await resp.json();
-    const perms = data.permissoes || {};
-
-    area.innerHTML = "";
-
-    let algumPermitido = false;
-    paginas.forEach((pag) => {
-      if (perms[pag.nome]) {
-        algumPermitido = true;
-        const btn = document.createElement("button");
-        btn.textContent = pag.label;
-        btn.addEventListener("click", () => {
-          window.location.href = `${pag.nome}.html`;
-        }, { once: true });
-        area.appendChild(btn);
-      }
-    });
-
-    loading.style.display = "none";
-    if (algumPermitido) {
-      menu.style.display = "block";
-    } else {
-      alert("Acesso inválido.");
-      logout();
+  function setLoading(state) {
+    isLoading = state;
+    const btn = $("btnEntrar");
+    if (btn) {
+      btn.disabled = state;
+      btn.textContent = state ? "Carregando..." : "Entrar";
     }
+  }
 
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar. Tente novamente.");
-    loading.style.display = "none";
-    logout();
-  } finally {
+  document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const isBack = params.get("back") === "1";
+    const chave = (localStorage.getItem("chave") || "").trim();
+
+    if (isBack && chave) {
+      hide($("tituloLogin"));
+      hide($("login-area"));
+      carregarMenu();
+    } else {
+      // acesso “frio”
+      localStorage.removeItem("chave");
+      hide($("menu")); $("botoes").innerHTML = "";
+      $("chave").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+    }
+  });
+
+  function login() {
+    const chave = $("chave").value.trim();
+    if (!chave) return alert("Digite sua chave.");
+    localStorage.setItem("chave", chave);
+    carregarMenu();
+  }
+
+  function logout() {
+    localStorage.removeItem("chave");
     setLoading(false);
-  }
-}
-</script>
+    hide($("menu")); $("botoes").innerHTML = "";
+    $("chave").value = "";
+    show($("tituloLogin"));
+    show($("login-area"));
+    hide($("loading")); // garante overlay escondido
 
-<script>
-  // mede a altura real útil da janela e salva em --vh
-  function setRealVh() {
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    // remove ?back=1 da URL se existir
+    if (window.location.search.includes("back=1")) {
+      window.history.replaceState({}, "", "index.html");
+    }
   }
-  setRealVh();
-  window.addEventListener('resize', setRealVh);
-  window.addEventListener('orientationchange', setRealVh);
-</script>
-  
-<footer class="site-footer">
-  <div class="footer-inner">
-    <strong>Criado por Bruno Lima • </strong>
-   <a href="mailto:limasketch@gmail.com">Implemente no seu evento.</a>
-   <small>© 2025 Automatic Post. Todos os direitos reservados.</small>
-  </div>
-</footer>
-  
+
+  async function carregarMenu() {
+    if (isLoading) return;
+    const chave = localStorage.getItem("chave");
+    if (!chave) return;
+
+    setLoading(true);
+
+    const titulo  = $("tituloLogin");
+    const loginAr = $("login-area");
+    const menu    = $("menu");
+    const area    = $("botoes");
+    const loading = $("loading");
+
+    // só loading na tela
+    hide(titulo);
+    hide(loginAr);
+    hide(menu);
+    show(loading);
+
+    try {
+      const resp  = await fetch(`${AUTH_API_URL}?chave=${encodeURIComponent(chave)}`);
+      const data  = await resp.json();
+      const perms = data.permissoes || {};
+
+      area.innerHTML = "";
+      let algumPermitido = false;
+
+      paginas.forEach((pag) => {
+        if (perms[pag.nome]) {
+          algumPermitido = true;
+          const btn = document.createElement("button");
+          btn.textContent = pag.label;
+          btn.addEventListener("click", () => {
+            window.location.href = `${pag.nome}.html`;
+          }, { once: true });
+          area.appendChild(btn);
+        }
+      });
+
+      hide(loading);
+      if (algumPermitido) {
+        show(menu);            // menu aparece
+        hide(titulo);          // e o login segue escondido
+        hide(loginAr);
+      } else {
+        alert("Acesso inválido.");
+        logout();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao carregar. Tente novamente.");
+      hide($("loading"));
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  }
+  </script>
+
+  <script>
+    // mede a altura útil (corrige mobile) e salva em --vh
+    function setRealVh() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    setRealVh();
+    window.addEventListener('resize', setRealVh);
+    window.addEventListener('orientationchange', setRealVh);
+  </script>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <strong>Criado por Bruno Lima • </strong>
+      <a href="mailto:limasketch@gmail.com">Implemente no seu evento.</a>
+      <small>© 2025 Automatic Post. Todos os direitos reservados.</small>
+    </div>
+  </footer>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
