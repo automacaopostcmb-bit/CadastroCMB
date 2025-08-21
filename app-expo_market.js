@@ -312,7 +312,7 @@ async function enviarParaGoogle() {
 /* ===========================
    AUTENTICAÇÃO (Apps Script)
    =========================== */
-const API_URL = "https://script.google.com/macros/s/AKfycby9W9w8NwLNpyX2XSegURIX5Z2qkJAyYskXePVggOwG6wJhquDFoY7jR91p_YmOyoDmVA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwh9I1OHg2xjLMQX1kLiSMplWXeBpHr8JDRkTIpfsssi0s1qHsp6esCvAEqhDxwTWl-ew/exec";
 const PAGINA  = "expo_market";
 async function checkAuth() {
   const chave = (localStorage.getItem("chave") || "").trim();
@@ -528,5 +528,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
 
 
