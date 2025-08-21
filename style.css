@@ -108,6 +108,16 @@ canvas {
   max-width: 600px;
 }
 
+/* Rótulos dos campos */
+.title-label{
+  display: block;           /* ocupa a linha toda */
+  font-weight: 700;         /* bold */
+  color: #111;              /* preto */
+  text-align: center;       /* centralizado */
+  font-size: 16px;
+  margin: 16px auto 6px;    /* espaçamento em cima/baixo */
+}
+
 /* Wizard */
 .step { display: none; }
 .step.active { display: block; }
@@ -305,4 +315,5 @@ canvas {
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
+
 
