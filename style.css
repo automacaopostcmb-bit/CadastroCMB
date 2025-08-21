@@ -13,13 +13,17 @@ html { overflow-x: hidden; }
   --gutter: clamp(12px, 4vw, 20px);  /* ajuste como quiser */
 }
 
-/* Body com “respiro” nas laterais e sem padding vertical */
+/* Body com “respiro” nas laterais e sem padding vertical
+   + flex para permitir rodapé sticky no fim */
 body{
   font-family: Arial, sans-serif;
   margin: 0;
   padding-block: 0;
   padding-inline: var(--gutter);    /* ✅ respiro horizontal global */
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+
   background: linear-gradient(180deg, #0286ff 0%, #22a6ff 35%, #94d8ff 75%, #eaf4ff 100%);
   background-attachment: fixed;
 }
@@ -29,7 +33,10 @@ body{
 
 h1, h2, h3 { text-align: center; margin: 0 0 14px 0; }
 
-/* Inputs / Textareas / Buttons padrão */
+/* =========================
+   FORM / COMPONENTES
+   ========================= */
+
 input, textarea, button {
   width: 100%;
   max-width: 420px;
@@ -252,13 +259,21 @@ canvas {
 .loader-gif { width: 80px; height: 80px; display:block; margin: 0 auto 12px; }
 .loader-text { font-size: 20px; color:#000; }
 
-/* Wrapper central de páginas (login/wizard) */
+/* =========================
+   ESTRUTURA DE PÁGINA
+   ========================= */
+
+/* Wrapper central de páginas (login/wizard).
+   Fica entre o topo e o rodapé, e “cresce” para empurrar o rodapé pro fim. */
 .page-center{
-  min-height: calc(100svh - 0px); /* sem interferir no respiro do body */
-  display:flex; flex-direction:column;
-  justify-content:center; align-items:center;
+  flex: 1;                   /* ocupa o espaço disponível */
+  min-height: auto;          /* não força altura além da viewport */
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
   gap:12px;
-  padding: 24px 0; /* sem padding lateral aqui; o lateral já vem do body */
+  padding: 24px 0;           /* sem padding lateral aqui; o lateral já vem do body */
 }
 
 /* Logo do topo (index e/ou outras páginas) */
@@ -273,4 +288,28 @@ canvas {
 #login-area, #menu, #loading{
   width: 100%;
   max-width: 420px;
+}
+
+/* =========================
+   RODAPÉ FULL-BLEED / STICKY
+   ========================= */
+
+.site-footer{
+  /* puxa a faixa pra fora do padding lateral do body (full-bleed) */
+  margin: 24px calc(var(--gutter) * -1) 0;
+  /* mantém o conteúdo alinhado com o resto da página */
+  padding: 16px var(--gutter);
+
+  background: #083a63;   /* azul mais escuro */
+  color: #fff;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.site-footer a{
+  color: #fff;
+  text-decoration: underline;
+}
+.site-footer a:hover{
+  opacity: .9;
 }
