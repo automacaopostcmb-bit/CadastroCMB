@@ -34,27 +34,7 @@
   </div>
 </div>
 
-<!-- Overlay de loading (cobre a TELA TODA) -->
-<div id="loading" style="
-  position: fixed;
-  inset: 0;                 /* cobre a tela toda */
-  display: none;            /* JS alterna para 'grid' quando for mostrar */
-  place-items: center;      /* centraliza o conteúdo */
-  background: rgba(255,255,255,.35);
-  z-index: 9999;
-">
-  <div style="
-    margin: 0;
-    padding: 12px 16px;
-    background: #fff;
-    border-radius: 10px;
-    font-weight: 700;
-    box-shadow: 0 6px 18px rgba(0,0,0,.15);
-    color: #000;
-  ">
-    Carregando páginas…
-  </div>
-</div>
+<!-- Wrapper central (pode ajustar com --center-offset) --> <div class="page-center" style="--center-offset: -60px;"> <img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo"> <h2 id="tituloLogin">Login</h2> <div id="login-area"> <input type="text" id="chave" placeholder="Digite sua chave de acesso" /> <button id="btnEntrar" onclick="login()">Entrar</button> </div> <!-- Overlay de loading (centralizado) --> <div id="loading" class="is-hidden" style=" position: fixed; inset: 0; display: grid; /* fica grid sempre; quem controla visibilidade é a classe .is-hidden */ place-items: center; background: rgba(255,255,255,.35); z-index: 9999; "> <div style=" margin: 0; padding: 12px 16px; background: #fff; border-radius: 10px; font-weight: 700; box-shadow: 0 6px 18px rgba(0,0,0,.15); color: #000; "> Carregando páginas… </div> </div> <!-- Menu --> <div id="menu" hidden> <h3>Páginas disponíveis</h3> <div id="botoes"></div> <p id="linkSair" onclick="logout()" style="cursor:pointer; color:#007bff; text-align:center; font-size:14px; margin-top:16px;">Sair</p> </div> </div>
 
 
   <script>
@@ -202,5 +182,6 @@
   </footer>
 </body>
 </html>
+
 
 
