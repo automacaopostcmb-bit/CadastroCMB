@@ -83,7 +83,7 @@ canvas {
   max-width: 520px;
   margin: 8px auto 16px;
   text-align: center;
-  color: #007bff;
+  color: #ffffff;
   font-size: 14px;
   text-decoration: none;
 }
@@ -305,3 +305,4 @@ canvas {
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
+
