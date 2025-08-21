@@ -290,26 +290,38 @@ canvas {
   max-width: 420px;
 }
 
-/* =========================
-   RODAPÉ FULL-BLEED / STICKY
-   ========================= */
+/* body já está display:flex; flex-direction:column; (mantém) */
+/* .page-center já tem flex:1 no CSS que te passei */
 
+/* Rodapé full-bleed sticky */
 .site-footer{
-  /* puxa a faixa pra fora do padding lateral do body (full-bleed) */
+  /* leva a faixa até a borda da tela (compensa o padding lateral do body) */
   margin: 24px calc(var(--gutter) * -1) 0;
-  /* mantém o conteúdo alinhado com o resto da página */
-  padding: 16px var(--gutter);
-
-  background: #083a63;   /* azul mais escuro */
+  background: #083a63;
   color: #fff;
-  text-align: center;
+}
+
+/* Conteúdo do rodapé centralizado e com respiro */
+.site-footer .footer-inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+  text-align: center;           /* troque para left se preferir à esquerda */
   line-height: 1.5;
 }
 
+/* Links no rodapé */
 .site-footer a{
   color: #fff;
   text-decoration: underline;
 }
-.site-footer a:hover{
-  opacity: .9;
+.site-footer a:hover{ opacity: .9; }
+
+/* (Opcional) conforto em celulares com “queixo”/notch */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .site-footer .footer-inner{
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
 }
+
+
