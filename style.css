@@ -178,8 +178,8 @@ canvas {
   height:100svh;
   max-width:none !important;   /* impede travar em 420px */
   display:none;                /* o JS liga/desliga */
-  place-items:center;          /* centraliza quando vira grid */
-  background:rgba(255,255,255,.35);
+ place-items: start center;          /* centraliza quando vira grid */
+  background:rgba(0,0,0,.35);
   z-index:10000;
 }
 #loading .loading-bubble{
@@ -211,3 +211,4 @@ canvas {
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
+
