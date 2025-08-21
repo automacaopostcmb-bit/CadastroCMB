@@ -6,7 +6,7 @@
   <title>Cadastro de expositores CMB</title>
 
   <!-- CSS global (bump de cache com v=9) -->
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 
   <!-- Deixe o body básico; todo o layout é controlado pela .page-center no style.css -->
   <style>
@@ -115,7 +115,11 @@ async function carregarMenu() {
   const loading = document.getElementById("loading");
 
   // só loading na tela
-loading.style.display = "grid";
+
+titulo.style.display = "none";
+loginAr.style.display = "none";
+menu.style.display = "none";
+loading.style.display = "block";   // 🔴 TROCAR ESTA LINHA
 
 
   try {
@@ -179,6 +183,7 @@ loading.style.display = "grid";
   
 </body>
 </html>
+
 
 
 
