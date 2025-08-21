@@ -6,7 +6,7 @@
   <title>Cadastro de expositores CMB</title>
 
   <!-- CSS global -->
-  <link rel="stylesheet" href="style.css?v=40">
+  <link rel="stylesheet" href="style.css?v=42">
 
   <!-- Body básico; layout vem do CSS -->
   <style>
@@ -35,22 +35,8 @@
   </div>
 
   <!-- Overlay de loading (fora da .page-center para cobrir a tela toda) -->
-  <div id="loading" style="
-    position: fixed;
-    left: 0; top: 0; right: 0; bottom: 0;
-    width: 100vw; height: 100vh;
-    display: none;                /* JS alterna para 'grid' */
-    place-items: center;
-    background: rgba(255,255,255,.35);
-    z-index: 9999;
-    text-align: center; font-weight: 700;
-  ">
-    <div style="
-      background:#fff; padding:12px 16px; border-radius:10px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.15); color:#000;
-    ">
-      Carregando páginas…
-    </div>
+  <div id="loading">
+    <div class="loading-bubble">Carregando páginas…</div>
   </div>
 
   <script>
@@ -129,10 +115,12 @@
     const loading = document.getElementById("loading");
 
     // só loading na tela
-    titulo.style.display = "none";
+    titulo.style.display  = "none";
     loginAr.style.display = "none";
-    menu.style.display = "none";
-    loading.style.display = "grid";   // centraliza o balão
+    menu.style.display    = "none";
+    loading.style.display = "grid";   // ✅ centraliza o balão
+
+    let algumPermitido = false;
 
     try {
       // UMA chamada: retorna todas as permissões da chave
@@ -142,7 +130,6 @@
 
       area.innerHTML = "";
 
-      let algumPermitido = false;
       paginas.forEach((pag) => {
         if (perms[pag.nome]) {
           algumPermitido = true;
@@ -150,26 +137,26 @@
           btn.textContent = pag.label;
           btn.addEventListener("click", () => {
             window.location.href = `${pag.nome}.html`;
-          }); // pode deixar sem { once:true } para reuso após voltar
+          }); // sem { once:true } para reuso ao voltar
           area.appendChild(btn);
         }
       });
 
-      loading.style.display = "none";
-      if (algumPermitido) {
-        menu.style.display = "block";
-      } else {
-        alert("Acesso inválido.");
-        logout();
-      }
-
     } catch (err) {
       console.error(err);
       alert("Erro ao carregar. Tente novamente.");
-      loading.style.display = "none";
       logout();
+      return;
     } finally {
+      loading.style.display = "none"; // ✅ esconde o overlay
       setLoading(false);
+    }
+
+    if (algumPermitido) {
+      menu.style.display = "block";
+    } else {
+      alert("Acesso inválido.");
+      logout();
     }
   }
   </script>
