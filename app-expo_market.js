@@ -222,8 +222,7 @@ async function enviarParaGoogle() {
     'nome','email','telefone',
     'empresa','site','insta',
     'logo','lateral',
-    'titulo','descricao',
-    'descricaolonga'
+    'titulo','descricao'
   ];
   let camposVazios = [];
   camposObrigatorios.forEach(id => {
@@ -339,8 +338,7 @@ const REQUIRED_BY_STEP = {
   3: ['empresa','site','insta'],
   4: ['logo','lateral'],
   5: ['titulo','descricao'],
-  6: ['descricaolonga'],
-  7: []
+  6: []
 };
 const GLOBAL_VALIDATORS = [ /* se quiser, adicione validadores para todas as etapas */ ];
 
@@ -530,4 +528,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
 
