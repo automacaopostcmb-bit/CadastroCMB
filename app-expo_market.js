@@ -19,17 +19,14 @@ const REVIEW_FIELDS = [
   { id: 'empresa',        label: 'Empresa' },
   { id: 'site',           label: 'Site',    format: v => normalizeUrlMaybe(v) },
   { id: 'insta',          label: 'Instagram' },
-  // Ex.: mostrar só o nome do arquivo:
-  // { id: 'logo', label: 'Logo', format: () => document.getElementById('logo')?.files[0]?.name || '—' }
 ];
 
-// Mensagens combinadas da etapa 5 (char-limit + overflow)
+/* Mensagens/flags etapa 5 */
 const step5Messages = { charError: '' };
-// Flag de overflow do canvas
 const validationFlags = { overflow: false };
 
 /* ===========================
-   HELPERS GERAIS / FORMATO
+   HELPERS
    =========================== */
 function showFieldError(inputId, msg) {
   const box = document.getElementById(inputId + 'Error');
@@ -58,6 +55,20 @@ function updateStep5Warning() {
   aviso.textContent = text;
   aviso.style.display = text ? 'block' : 'none';
 }
+function buildCaptionFromForm() {
+  const empresa = (document.getElementById('empresa')?.value || '').trim();
+  let insta = (document.getElementById('insta')?.value || '').trim();
+  if (insta) { insta = '@' + insta.replace(/^@+/, ''); }
+
+  const descLonga = (document.getElementById('descricaolonga')?.value || '').trim();
+  const descCurta = (document.getElementById('descricao')?.value || '').trim();
+  const descricao = descLonga || descCurta || '';
+
+  const head = `Expositor confirmado! ${empresa || '—'} ${insta || ''} no CMB @comicmarketbrasil`;
+  const tags = '#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom';
+
+  return [head, '', descricao, '', tags].join('\n');
+}
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -77,7 +88,6 @@ function initCanvas() {
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
-  // Carrega moldura
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
@@ -93,7 +103,6 @@ function initCanvas() {
   };
   frameImg.src = FRAME_URL + '?v=' + Date.now();
 
-  // Uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
 
@@ -112,25 +121,21 @@ function initCanvas() {
     });
   }
 
-  // Controles do preview
   ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', gerarPost);
   });
 
-  // fonte
   document.fonts?.ready?.then(gerarPost);
 }
 
 function gerarPost() {
   if (!ctx) return;
 
-  // Fundo
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Imagem de apoio
   if (lateralImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = 150, anchorPointY = 1000;
@@ -142,12 +147,10 @@ function gerarPost() {
     ctx.drawImage(lateralImg, drawX, drawY, w, h);
   }
 
-  // Moldura
   if (frameImg?.complete && frameImg.naturalWidth) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  // Logo centralizada
   if (logoImg) {
     const maxWidth = 500, maxHeight = 350;
     const scale = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
@@ -156,7 +159,6 @@ function gerarPost() {
     ctx.drawImage(logoImg, (canvas.width - width) / 2, centerY - height / 2, width, height);
   }
 
-  // Título
   const titulo = (document.getElementById('titulo').value || '').trim();
   ctx.font = 'bold 48px "Comic Relief"';
   ctx.fillStyle = '#FFFFFF';
@@ -171,7 +173,6 @@ function gerarPost() {
   let offsetY = (linhasTituloSlice.length === 1) ? 30 : 0;
   linhasTituloSlice.forEach((linha, i) => ctx.fillText(linha, tituloX, tituloYBase + i * 54 + offsetY));
 
-  // Descrição
   const descricao = (document.getElementById('descricao').value || '').trim();
   ctx.font = '28px "Comic Relief"';
   ctx.fillStyle = '#333333';
@@ -185,7 +186,6 @@ function gerarPost() {
   const linhasDescricao = todas.slice(0, descricaoMaxLinhas);
   linhasDescricao.forEach((linha, i) => ctx.fillText(linha, descricaoX, descricaoY + i * 40));
 
-  // Flags e aviso
   validationFlags.overflow = (ultrapassouTitulo || ultrapassouDescricao);
   updateStep5Warning();
   if (typeof revalidateStepNav === 'function') revalidateStepNav();
@@ -263,6 +263,9 @@ async function enviarParaGoogle() {
     previewBase64 = { name: 'preview.png', type: 'image/png', content: previewDataURL.split(',')[1] };
   }
 
+  // 👇 NOVO: legenda invisível enviada junto
+  const legenda = buildCaptionFromForm();
+
   const dados = {
     nome: document.getElementById('nome').value,
     email: document.getElementById('email').value,
@@ -273,6 +276,7 @@ async function enviarParaGoogle() {
     titulo: document.getElementById('titulo').value,
     descricao: document.getElementById('descricao').value,
     descricaolonga: document.getElementById('descricaolonga').value,
+    legenda, // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     logo: logoBase64,
     lateral: lateralBase64,
     background: backgroundBase64,
@@ -282,31 +286,42 @@ async function enviarParaGoogle() {
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'flex';
 
-  const response = await fetch("https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec", {
-    method: "POST",
-    body: JSON.stringify(dados)
-  });
+  try {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec", {
+      method: "POST",
+      body: JSON.stringify(dados)
+    });
 
-  const result = await response.json();
-  const msg = document.getElementById('mensagem');
-  msg.style.display = 'block';
+    const result = await response.json();
+    const msg = document.getElementById('mensagem');
+    msg.style.display = 'block';
 
-  if (result.status === 'success') {
-    msg.textContent = '✅ Enviado com sucesso!';
-    msg.style.color = 'green';
+    if (result.status === 'success') {
+      msg.textContent = '✅ Enviado com sucesso!';
+      msg.style.color = 'green';
 
-    document.getElementById('step7').style.display = 'none';
-    document.getElementById('wizard-indicator').style.display = 'none';
-    document.getElementById('link-topo').style.display = 'none';
-    document.getElementById('final-screen').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } else {
-    msg.textContent = '❌ Erro ao enviar: ' + (result.message || 'Tente novamente.');
+      document.getElementById('step7').style.display = 'none';
+      document.getElementById('wizard-indicator').style.display = 'none';
+      document.getElementById('link-topo').style.display = 'none';
+      document.getElementById('final-screen').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      msg.textContent = '❌ Erro ao enviar: ' + (result.message || 'Tente novamente.');
+      msg.style.color = 'red';
+    }
+  } catch (err) {
+    const msg = document.getElementById('mensagem');
+    msg.textContent = '❌ Erro de rede. Tente novamente.';
     msg.style.color = 'red';
+    msg.style.display = 'block';
+    console.error(err);
+  } finally {
+    overlay.style.display = 'none';
+    setTimeout(() => {
+      const msg = document.getElementById('mensagem');
+      if (msg) msg.textContent = '';
+    }, 5000);
   }
-
-  overlay.style.display = 'none';
-  setTimeout(() => { msg.textContent = ''; }, 5000);
 }
 
 /* ===========================
@@ -340,7 +355,7 @@ const REQUIRED_BY_STEP = {
   5: ['titulo','descricao'],
   6: []
 };
-const GLOBAL_VALIDATORS = [ /* se quiser, adicione validadores para todas as etapas */ ];
+const GLOBAL_VALIDATORS = [];
 
 const STEP_VALIDATORS = {
   2: () => {
@@ -423,7 +438,6 @@ function validateStep(stepNumber) {
 
   return true;
 }
-// Sempre valida (mesmo sem “Próximo”) — etapa 7 precisa disso para montar a revisão
 function revalidateStepNav() {
   const activeStep = steps[currentStep - 1];
   const isValid = validateStep(currentStep);
@@ -439,12 +453,9 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-
-  // Monta revisão ao entrar na etapa 7
   if (currentStep === 7) {
     try { buildReview(); } catch (e) { console.error('buildReview error', e); }
   }
-
   updateIndicator();
   revalidateStepNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -478,23 +489,17 @@ function buildReview() {
    MENU: voltar para index.html?back=1
    =========================== */
 function goToMenu() {
-  // monta URL relativa para o index na MESMA pasta do arquivo atual
-  const base = location.href.replace(/[^/]+$/, ''); // remove o nome do arquivo atual
+  const base = location.href.replace(/[^/]+$/, '');
   window.location.href = base + 'index.html?back=1';
 }
 
 /* ===========================
-   BOOTSTRAP DA PÁGINA (com GUARD)
+   BOOTSTRAP
    =========================== */
 document.addEventListener('DOMContentLoaded', () => {
-  // ✅ Só roda o wizard se a página tiver os elementos do wizard
   const isWizardPage = !!document.querySelector('.step') && !!document.getElementById('wizard-indicator');
-  if (!isWizardPage) {
-    // Ex.: estamos no index.html (login) → não inicializa nada daqui
-    return;
-  }
+  if (!isWizardPage) return;
 
-  // máscara do telefone
   const telEl = document.getElementById('telefone');
   if (telEl) {
     telEl.addEventListener('input', (e) => {
@@ -504,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   initCanvas();
-  checkAuth(); // exige chave válida para abrir a página
+  checkAuth();
 
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
@@ -528,8 +533,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
-
-
-
-
-
