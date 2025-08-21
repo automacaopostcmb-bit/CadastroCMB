@@ -26,11 +26,11 @@
       <div class="faixa-secao"><span>Boas-vindas</span></div>
 
       <div id="intro-content" class="intro-box">
-        <h2>Bem-vindo(a) ao Gerador de Post do Comic Learning 🎉</h2>
+        <h2>Cadastro de expositor na área Market do CMB 🎉</h2>
         <p>
-          Preencha seus dados e envie os arquivos. No fim, você poderá fazer o
-          download da imagem gerada. Se o texto do <strong>Preview</strong> extrapolar a área,
-          um aviso aparecerá e o botão <em>Próximo</em> ficará desabilitado até você ajustar.
+          Preencha seus dados e no fim, você poderá fazer o
+          download da imagem gerada para divulgação. 
+          Fique atento as informações pedidas. Caso algo esteja faltando, o botão <em>Próximo</em> ficará desabilitado até você ajustar.
         </p>
         <p>Clique em <strong>Próximo</strong> para começar!</p>
       </div>
@@ -69,7 +69,7 @@
       <input type="text" id="empresa" placeholder="" />
 
       <label class="title-label">Site:</label>
-      <div class="hint">(Cole o link do seu site)</div>
+      <div class="hint">(Cole o link do seu site. Caso não tenha, pode ser o link da sua rede social)</div>
       <input type="text" id="site" placeholder="" />
       <div id="siteError" class="inline-error"></div>
 
@@ -88,12 +88,12 @@
     <section class="step" id="step4">
       <div class="faixa-secao"><span>Imagens</span></div>
 
-      <label class="title-label">Envie o seu Logo:</label>
-      <div class="hint">(Use uma imagem com fundo transparente)</div>
+      <label class="title-label">Envie o seu Logo com fundo transparente:</label>
+      <div class="hint">(Use uma imagem sem bordas. Ou seja, que não tenha espaços nas laterais, mesmo que transparentes.)</div>
       <input type="file" id="logo" accept="image/*" />
 
-      <label class="title-label">Escolha uma imagem de apoio:</label>
-      <div class="hint">(Qual outra imagem poderíamos usar para mostrar mais de você?)</div>
+      <label class="title-label">Envie uma imagem de apoio:</label>
+      <div class="hint">(Qual outra imagem poderíamos usar quando formos mostrar mais de você?)</div>
       <input type="file" id="lateral" accept="image/*" />
 
       <div class="button-row">
@@ -119,11 +119,11 @@
 
       <div id="avisoTexto"></div>
 
-      <label class="title-label">Aqui é o seu título! Nos diga, o que você faz?</label>
+      <label class="title-label">Frase que defina o que você faz</label>
       <div class="hint">(Pense como se fosse um título chamativo do seu trabalho)</div>
       <input type="text" id="titulo" placeholder="Título" />
 
-      <label class="title-label">Descreva um pouco mais</label>
+      <label class="title-label">Crie uma breve descrição:</label>
       <textarea id="descricao" rows="4" placeholder=""></textarea>
 
       <div class="button-row">
@@ -134,12 +134,13 @@
 
     <!-- ========== ETAPA 6 — BIO (SEM ENVIAR) ========== -->
     <section class="step" id="step6">
-      <label class="title-label">Escreva a sua Bio</label>
-      <div class="hint">(Aqui não tem limite de caracteres. Vamos usar essas informações para divulgação)</div>
+      <div class="faixa-secao"><span>Informações adicionais:</span></div>
+      
+      <label class="title-label">Texto complementar</label>
+      <div class="hint">(Biografia ou texto maior de você ou do seu trabalho. Quanto mais informações nos der, melhor conseguiremos te divulgar.)</div>
       <textarea id="descricaolonga" rows="8" placeholder=""></textarea>
 
       <label class="title-label">Tem alguma outra imagem para nos mandar?</label>
-      <div class="hint">(Pode ser uma arte, uma foto sua em outro evento... Fique à vontade!)</div>
       <input type="file" id="background" accept="image/*" />
 
       <div class="button-row">
@@ -198,4 +199,5 @@
   </footer>
 </body>
 </html>
+
 
