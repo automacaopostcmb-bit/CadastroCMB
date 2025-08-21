@@ -1,7 +1,7 @@
 /* =========================================================
    CONFIGURAÇÃO (edite aqui limites, campos de revisão, etc.)
    ========================================================= */
-const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame.png';
+const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
 
 const CHAR_LIMITS = {
   titulo:    { min: 5,  max: 60  },  // Etapa 5
@@ -282,7 +282,7 @@ async function enviarParaGoogle() {
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'flex';
 
-  const response = await fetch("https://script.google.com/macros/s/AKfycbwYlIt_E3FnscPe3Pos3JEPmDvzu3SuPNrrwUqukTsjtT973GP_HLwxfDr3jpvC423Beg/exec", {
+  const response = await fetch("https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec", {
     method: "POST",
     body: JSON.stringify(dados)
   });
@@ -528,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
 
 
 
