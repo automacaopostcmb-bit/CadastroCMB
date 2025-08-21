@@ -5,19 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cadastro de expositores CMB</title>
 
-  <!-- CSS global (bump de cache com v=9) -->
-  <link rel="stylesheet" href="style.css?v=37">
+  <!-- CSS global -->
+  <link rel="stylesheet" href="style.css?v=39">
 
-  <!-- Deixe o body básico; todo o layout é controlado pela .page-center no style.css -->
   <style>
     html, body { height: 100%; }
     body { margin: 0; }
   </style>
 </head>
 <body>
-  <!-- Wrapper que centraliza vertical/horizontal.
-       Use --center-shift para subir/descer (negativo = sobe). -->
-<div class="page-center" style="--center-offset: -60px;">
+  <!-- Wrapper central (ajuste vertical com --center-offset se quiser) -->
+  <div class="page-center" style="--center-offset: -60px;">
     <img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo">
 
     <h2 id="tituloLogin">Login</h2>
@@ -27,8 +25,24 @@
       <button id="btnEntrar" onclick="login()">Entrar</button>
     </div>
 
-    <!-- Loading -->
-<div id="loading" style="display:none; text-align:center;"><p>Carregando páginas…</p></div>
+    <!-- Overlay de loading (full-screen + centralizado) -->
+    <div id="loading" style="
+      position: fixed;
+      inset: 0;
+      display: none;            /* JS alterna 'grid' / 'none' */
+      place-items: center;
+      background: rgba(255,255,255,.35);
+      z-index: 9999;
+      text-align: center;
+      font-weight: 700;
+    ">
+      <div style="
+        background:#fff; padding:12px 16px; border-radius:10px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.15); color:#000;
+      ">
+        Carregando páginas…
+      </div>
+    </div>
 
     <!-- Menu -->
     <div id="menu" style="display:none;">
@@ -54,10 +68,13 @@ let isLoading = false;
 function setLoading(state) {
   isLoading = state;
   const btn = document.getElementById("btnEntrar");
+  const loading = document.getElementById("loading");
   if (btn) {
     btn.disabled = state;
     btn.textContent = state ? "Carregando..." : "Entrar";
   }
+  // overlay full-screen
+  if (loading) loading.style.display = state ? "grid" : "none";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -78,6 +95,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") login();
     });
   }
+});
+
+// Reatacha tudo quando voltamos de outra página (inclusive bfcache)
+window.addEventListener("pageshow", (e) => {
+  const chave = (localStorage.getItem("chave") || "").trim();
+  if (!chave) return; // sem chave, fica na tela de login
+  // Se voltou do histórico, reconstrói o menu para garantir listeners
+  const botoes = document.getElementById("botoes");
+  if (botoes) botoes.innerHTML = "";
+  document.getElementById("tituloLogin").style.display = "none";
+  document.getElementById("login-area").style.display = "none";
+  carregarMenu();
 });
 
 function login() {
@@ -111,13 +140,11 @@ async function carregarMenu() {
   const loginAr = document.getElementById("login-area");
   const menu    = document.getElementById("menu");
   const area    = document.getElementById("botoes");
-  const loading = document.getElementById("loading");
 
   // só loading na tela
-  titulo.style.display = "none";
-  loginAr.style.display = "none";
-  menu.style.display = "none";
-  loading.style.display = "block";
+  if (titulo)  titulo.style.display  = "none";
+  if (loginAr) loginAr.style.display = "none";
+  if (menu)    menu.style.display    = "none";
 
   try {
     // UMA chamada: retorna todas as permissões da chave
@@ -133,14 +160,16 @@ async function carregarMenu() {
         algumPermitido = true;
         const btn = document.createElement("button");
         btn.textContent = pag.label;
+        // sem { once:true } para funcionar quando voltar pelo botão físico
         btn.addEventListener("click", () => {
+          btn.disabled = true;      // evita clique duplo
+          btn.textContent = "Abrindo…";
           window.location.href = `${pag.nome}.html`;
-        }, { once: true });
+        });
         area.appendChild(btn);
       }
     });
 
-    loading.style.display = "none";
     if (algumPermitido) {
       menu.style.display = "block";
     } else {
@@ -151,7 +180,6 @@ async function carregarMenu() {
   } catch (err) {
     console.error(err);
     alert("Erro ao carregar. Tente novamente.");
-    loading.style.display = "none";
     logout();
   } finally {
     setLoading(false);
@@ -160,7 +188,7 @@ async function carregarMenu() {
 </script>
 
 <script>
-  // mede a altura real útil da janela e salva em --vh
+  // mede a altura real útil da janela e salva em --vh (para mobile)
   function setRealVh() {
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -169,31 +197,14 @@ async function carregarMenu() {
   window.addEventListener('resize', setRealVh);
   window.addEventListener('orientationchange', setRealVh);
 </script>
-  
-  <footer class="site-footer">
+
+<footer class="site-footer">
   <div class="footer-inner">
     <strong>Criado por Bruno Lima • </strong>
     <a href="mailto:limasketch@gmail.com">Implemente no seu evento.</a>
     <small>© 2025 Automatic Post. Todos os direitos reservados.</small>
   </div>
 </footer>
-  
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
