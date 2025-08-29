@@ -4,10 +4,7 @@
 const FRAME_URL =
   'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
 
-/* ===== TARJAS (AJUSTE AQUI) =====
-   x e y = posição em px (0,0 no canto superior esquerdo do canvas)
-   scale = multiplicador do tamanho (1 = 100%)
-*/
+/* ===== TARJAS (AJUSTE AQUI) ===== */
 const TARJAS = {
   artista: { src: 'assets/tarja-artista.png', x: 90, y: 190, scale: 0.2 },
   empresa: { src: 'assets/tarja-empresa.png', x: 90, y: 190, scale: 0.2 }
@@ -57,8 +54,10 @@ function updateStep5Warning() {
   if (validationFlags.overflow) msgs.push('* Ups, seu texto ultrapassou da caixa. Por favor ajuste!');
   if (step5Messages.charError) msgs.push(step5Messages.charError);
   const text = msgs.join(' ');
-  aviso.textContent = text;
-  aviso.style.display = text ? 'block' : 'none';
+  if (aviso) {
+    aviso.textContent = text;
+    aviso.style.display = text ? 'block' : 'none';
+  }
 }
 function buildCaptionFromForm() {
   const empresa = (document.getElementById('empresa')?.value || '').trim();
@@ -78,7 +77,7 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 function loadImage(src) {
-  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now(); // cache-buster p/ ver mudanças
+  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now();
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -91,46 +90,152 @@ function loadImage(src) {
 /* ===========================
    VARS DO CANVAS / PREVIEW
    =========================== */
-let canvas, ctx, frameImg, logoImg, lateralImg;
+// Etapa 4 (preview menor)
+let canvas4, ctx4;
+// Etapa 5 (preview final)
+let canvas5, ctx5;
+
+// Alias mantidos (para baixarImagem/enviar)
+let canvas, ctx;
+
+let frameImg, logoImg, lateralImg;
 let tarjaImg = null, tarjaCfg = null, categoriaSelecionada = null;
+
+// Estado da imagem de apoio (E4, em pixels)
+let posX4 = 0, posY4 = 0, drawnW4 = 0;
+
+// Estado NORMALIZADO (usado para transportar E4->E5)
+let apoio_nX = 0.3, apoio_nY = 0.3, apoio_nW = 0.4; // defaults
 
 /* ===========================
    CANVAS
    =========================== */
 function initCanvas() {
-  canvas = document.getElementById('canvas');
-  if (!canvas) return;
-  ctx = canvas.getContext('2d');
+  // Etapa 4
+  canvas4 = document.getElementById('canvas4');
+  ctx4 = canvas4 ? canvas4.getContext('2d') : null;
 
-  // frame
+  // Etapa 5
+  canvas5 = document.getElementById('canvas5');
+  ctx5 = canvas5 ? canvas5.getContext('2d') : null;
+
+  // Mantém compatibilidade
+  canvas = canvas5;
+  ctx = ctx5;
+
+  // Frame (usado nos dois previews)
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
-  frameImg.onload = gerarPost;
+  frameImg.onload = () => {
+    drawStep4();
+    gerarPost(); // desenha E5
+  };
   frameImg.onerror = () => console.error('Falha ao carregar frame:', FRAME_URL);
   frameImg.src = FRAME_URL + '?v=' + Date.now();
 
-  // uploads
+  // Uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
+
   logoInput?.addEventListener('change', (e) => {
     const r = new FileReader();
     r.onload = (ev) => { logoImg = new Image(); logoImg.onload = gerarPost; logoImg.src = ev.target.result; };
     r.readAsDataURL(e.target.files[0]);
   });
+
   lateralInput?.addEventListener('change', (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
     const r = new FileReader();
-    r.onload = (ev) => { lateralImg = new Image(); lateralImg.onload = gerarPost; lateralImg.src = ev.target.result; };
-    r.readAsDataURL(e.target.files[0]);
+    r.onload = (ev) => {
+      // salva base64 para E5
+      localStorage.setItem('apoio_b64', ev.target.result);
+      // cria imagem
+      lateralImg = new Image();
+      lateralImg.onload = () => {
+        // tamanho inicial: 40% da largura do canvas4 (ou defaults se não houver canvas4)
+        const cw = canvas4 ? canvas4.width : 1080;
+        const ch = canvas4 ? canvas4.height : 1350;
+
+        apoio_nW = 0.4;
+        drawnW4 = cw * apoio_nW;
+        const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
+
+        posX4 = (cw - drawnW4) / 2;
+        posY4 = (ch - drawnH4) / 2;
+
+        // salva normalizado
+        updateNormalizedFromPixels();
+
+        drawStep4();
+        gerarPost(); // se já estiver na E5, refaz
+      };
+      lateralImg.src = ev.target.result;
+    };
+    r.readAsDataURL(f);
   });
 
-  // sliders imagem de apoio + textos
-  ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach((id) => {
+  // Sliders (somente E4)
+  document.getElementById('imgScale4')?.addEventListener('input', () => {
+    if (!canvas4 || !lateralImg) return;
+    const pct = parseFloat(document.getElementById('imgScale4').value || '40'); // 10..90
+    drawnW4 = canvas4.width * (pct / 100);
+    clampPosE4();
+    updateNormalizedFromPixels();
+    drawStep4();
+  });
+  document.getElementById('imgX4')?.addEventListener('input', () => {
+    if (!canvas4 || !lateralImg) return;
+    const val = parseFloat(document.getElementById('imgX4').value || '50'); // 0..100
+    const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
+    posX4 = (canvas4.width - drawnW4) * (val / 100);
+    posX4 = Math.max(0, Math.min(posX4, canvas4.width - drawnW4));
+    // mantém Y atual dentro do limite
+    posY4 = Math.max(0, Math.min(posY4, canvas4.height - drawnH4));
+    updateNormalizedFromPixels();
+    drawStep4();
+  });
+  document.getElementById('imgY4')?.addEventListener('input', () => {
+    if (!canvas4 || !lateralImg) return;
+    const val = parseFloat(document.getElementById('imgY4').value || '50'); // 0..100
+    const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
+    posY4 = (canvas4.height - drawnH4) * (val / 100);
+    posY4 = Math.max(0, Math.min(posY4, canvas4.height - drawnH4));
+    // mantém X atual dentro do limite
+    posX4 = Math.max(0, Math.min(posX4, canvas4.width - drawnW4));
+    updateNormalizedFromPixels();
+    drawStep4();
+  });
+
+  // Lado textual (E5) aciona redesenho
+  ['titulo', 'descricao'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', gerarPost);
   });
 
   bindCategoriaRadios();
-  document.fonts?.ready?.then(gerarPost);
+  document.fonts?.ready?.then(() => { drawStep4(); gerarPost(); });
+}
+
+/* ----- util: mantém pos dentro do canvas E4 ----- */
+function clampPosE4() {
+  if (!canvas4 || !lateralImg) return;
+  const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
+  posX4 = Math.max(0, Math.min(posX4, canvas4.width - drawnW4));
+  posY4 = Math.max(0, Math.min(posY4, canvas4.height - drawnH4));
+}
+
+/* ----- converte E4 (px) -> normalizado ----- */
+function updateNormalizedFromPixels() {
+  if (!canvas4 || !lateralImg) return;
+  apoio_nX = posX4 / canvas4.width;
+  apoio_nY = posY4 / canvas4.height;
+  apoio_nW = drawnW4 / canvas4.width;
+
+  // persiste para E5
+  localStorage.setItem('apoio_nX', String(apoio_nX));
+  localStorage.setItem('apoio_nY', String(apoio_nY));
+  localStorage.setItem('apoio_nW', String(apoio_nW));
 }
 
 /* ---- radios + tarja (sem sliders) ---- */
@@ -140,61 +245,101 @@ function bindCategoriaRadios() {
     radio.addEventListener('change', () => selectCategoria(radio.value));
   });
 
-  // se já vier pré-selecionado
   const pre = document.querySelector('input[name="categoria"]:checked');
   if (pre) selectCategoria(pre.value);
 }
 async function selectCategoria(value) {
   categoriaSelecionada = value;
-  tarjaCfg = { ...TARJAS[value] };       // valores fixos definidos no código
+  tarjaCfg = { ...TARJAS[value] };
   try {
     tarjaImg = await loadImage(tarjaCfg.src);
   } catch (e) {
     console.error('Não foi possível carregar a tarja:', e);
-    tarjaImg = null; // cai no fallback visual
+    tarjaImg = null;
   }
+  drawStep4();
   gerarPost();
   revalidateStepNav();
 }
 
-/* ---- desenho ---- */
+/* ===========================
+   DESENHO: ETAPA 4 (preview menor)
+   =========================== */
+function drawStep4() {
+  if (!ctx4 || !canvas4) return;
+
+  ctx4.clearRect(0, 0, canvas4.width, canvas4.height);
+  ctx4.fillStyle = '#fff';
+  ctx4.fillRect(0, 0, canvas4.width, canvas4.height);
+
+  // imagem de apoio (usando estado em px da E4)
+  if (lateralImg && drawnW4 > 0) {
+    const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
+    ctx4.drawImage(lateralImg, posX4, posY4, drawnW4, drawnH4);
+  }
+
+  // frame por cima (mesmo asset, escala no canvas4)
+  if (frameImg?.complete && frameImg.naturalWidth) {
+    ctx4.drawImage(frameImg, 0, 0, canvas4.width, canvas4.height);
+  }
+}
+
+/* ===========================
+   DESENHO: ETAPA 5 (preview final)
+   =========================== */
 function gerarPost() {
-  if (!ctx) return;
+  if (!ctx5 || !canvas5) return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // lê normalizados (se tiverem sido salvos)
+  const nx = parseFloat(localStorage.getItem('apoio_nX') || `${apoio_nX}`) || 0;
+  const ny = parseFloat(localStorage.getItem('apoio_nY') || `${apoio_nY}`) || 0;
+  const nw = parseFloat(localStorage.getItem('apoio_nW') || `${apoio_nW}`) || 0.4;
 
-  // imagem de apoio
+  // se não houver imagem em memória, tenta recarregar do localStorage
+  if (!lateralImg) {
+    const b64 = localStorage.getItem('apoio_b64');
+    if (b64) {
+      lateralImg = new Image();
+      lateralImg.onload = () => { drawEverythingStep5(nx, ny, nw); };
+      lateralImg.src = b64;
+      return;
+    }
+  }
+
+  drawEverythingStep5(nx, ny, nw);
+}
+
+function drawEverythingStep5(nx, ny, nw) {
+  ctx5.clearRect(0, 0, canvas5.width, canvas5.height);
+  ctx5.fillStyle = '#fff';
+  ctx5.fillRect(0, 0, canvas5.width, canvas5.height);
+
+  // imagem de apoio: reconstituída em PX a partir dos NORMALIZADOS
   if (lateralImg) {
-    const scale = parseFloat(document.getElementById('imgScale').value || '1');
-    const anchorPointX = 150, anchorPointY = 1000;
-    const offsetX = parseInt(document.getElementById('imgX').value || '0', 10);
-    const offsetY = parseInt(document.getElementById('imgY').value || '0', 10);
-    const w = lateralImg.width * scale, h = lateralImg.height * scale;
-    const drawX = anchorPointX + offsetX - w / 2;
-    const drawY = anchorPointY + offsetY - h / 2;
-    ctx.drawImage(lateralImg, drawX, drawY, w, h);
+    const drawnW5 = nw * canvas5.width;
+    const drawnH5 = drawnW5 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
+    const x5 = nx * canvas5.width;
+    const y5 = ny * canvas5.height;
+    ctx5.drawImage(lateralImg, x5, y5, drawnW5, drawnH5);
   }
 
   // frame
   if (frameImg?.complete && frameImg.naturalWidth) {
-    ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+    ctx5.drawImage(frameImg, 0, 0, canvas5.width, canvas5.height);
   }
 
-  // tarja (sobre o frame) — usa APENAS tarjaCfg (sem sliders)
+  // tarja (sobre o frame)
   if (tarjaCfg) {
     if (tarjaImg) {
       const w = tarjaImg.naturalWidth * tarjaCfg.scale;
       const h = tarjaImg.naturalHeight * tarjaCfg.scale;
-      ctx.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
+      ctx5.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
     } else {
-      // fallback para debug visual
-      ctx.fillStyle = '#ffd400';
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 10;
-      ctx.fillRect(tarjaCfg.x, tarjaCfg.y, 460 * tarjaCfg.scale, 92 * tarjaCfg.scale);
-      ctx.strokeRect(tarjaCfg.x, tarjaCfg.y, 460 * tarjaCfg.scale, 92 * tarjaCfg.scale);
+      ctx5.fillStyle = '#ffd400';
+      ctx5.strokeStyle = '#000';
+      ctx5.lineWidth = 10;
+      ctx5.fillRect(tarjaCfg.x, tarjaCfg.y, 460 * tarjaCfg.scale, 92 * tarjaCfg.scale);
+      ctx5.strokeRect(tarjaCfg.x, tarjaCfg.y, 460 * tarjaCfg.scale, 92 * tarjaCfg.scale);
     }
   }
 
@@ -204,41 +349,44 @@ function gerarPost() {
     const s = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
     const w = logoImg.width * s, h = logoImg.height * s;
     const centerY = 450;
-    ctx.drawImage(logoImg, (canvas.width - w) / 2, centerY - h / 2, w, h);
+    ctx5.drawImage(logoImg, (canvas5.width - w) / 2, centerY - h / 2, w, h);
   }
 
   // título
-  const titulo = (document.getElementById('titulo').value || '').trim();
-  ctx.font = 'bold 48px "Comic Relief"';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.textAlign = 'left';
+  const titulo = (document.getElementById('titulo')?.value || '').trim();
+  ctx5.font = 'bold 48px "Comic Relief"';
+  ctx5.fillStyle = '#FFFFFF';
+  ctx5.textAlign = 'left';
 
   const tituloX = 400, tituloYBase = 880;
   const tituloMaxWidth = 600, tituloMaxLinhas = 2;
-  const linhasTitulo = wrapText(titulo, tituloMaxWidth, ctx);
+  const linhasTitulo = wrapText(titulo, tituloMaxWidth, ctx5);
   const ultrapassouTitulo = linhasTitulo.length > tituloMaxLinhas;
   const linhasTituloSlice = linhasTitulo.slice(0, tituloMaxLinhas);
   let offsetY = (linhasTituloSlice.length === 1) ? 30 : 0;
-  linhasTituloSlice.forEach((linha, i) => ctx.fillText(linha, tituloX, tituloYBase + i * 54 + offsetY));
+  linhasTituloSlice.forEach((linha, i) => ctx5.fillText(linha, tituloX, tituloYBase + i * 54 + offsetY));
 
   // descrição
-  const descricao = (document.getElementById('descricao').value || '').trim();
-  ctx.font = '28px "Comic Relief"';
-  ctx.fillStyle = '#333';
+  const descricao = (document.getElementById('descricao')?.value || '').trim();
+  ctx5.font = '28px "Comic Relief"';
+  ctx5.fillStyle = '#333';
   const descricaoX = 400, descricaoY = 1050;
   const descricaoMaxWidth = 600, descricaoMaxLinhas = 5;
   const linhasManuais = descricao.split('\n');
   let todas = [];
-  linhasManuais.forEach((l) => todas.push(...wrapText(l, descricaoMaxWidth, ctx)));
+  linhasManuais.forEach((l) => todas.push(...wrapText(l, descricaoMaxWidth, ctx5)));
   const ultrapassouDescricao = todas.length > descricaoMaxLinhas;
   const linhasDescricao = todas.slice(0, descricaoMaxLinhas);
-  linhasDescricao.forEach((linha, i) => ctx.fillText(linha, descricaoX, descricaoY + i * 40));
+  linhasDescricao.forEach((linha, i) => ctx5.fillText(linha, descricaoX, descricaoY + i * 40));
 
   validationFlags.overflow = (ultrapassouTitulo || ultrapassouDescricao);
   updateStep5Warning();
   if (typeof revalidateStepNav === 'function') revalidateStepNav();
 }
 
+/* ===========================
+   TEXT WRAP
+   =========================== */
 function wrapText(text, maxWidth, context) {
   const palavras = text.split(' ');
   const linhas = [];
@@ -260,7 +408,7 @@ function wrapText(text, maxWidth, context) {
 function baixarImagem() {
   const link = document.createElement('a');
   link.download = 'post.png';
-  link.href = canvas.toDataURL('image/png');
+  link.href = canvas5.toDataURL('image/png');
   link.click();
 }
 
@@ -299,8 +447,8 @@ async function enviarParaGoogle() {
   const backgroundBase64 = await processarImagem('background');
 
   let previewBase64 = null;
-  if (canvas) {
-    const dataURL = canvas.toDataURL('image/png');
+  if (canvas5) {
+    const dataURL = canvas5.toDataURL('image/png');
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
@@ -320,7 +468,11 @@ async function enviarParaGoogle() {
     lateral: lateralBase64,
     background: backgroundBase64,
     preview: previewBase64,
-    categoria: categoriaSelecionada || ''
+    categoria: categoriaSelecionada || '',
+    // também mando as normalizadas se quiser registrar:
+    apoio_nX: parseFloat(localStorage.getItem('apoio_nX') || `${apoio_nX}`),
+    apoio_nY: parseFloat(localStorage.getItem('apoio_nY') || `${apoio_nY}`),
+    apoio_nW: parseFloat(localStorage.getItem('apoio_nW') || `${apoio_nW}`)
   };
 
   const overlay = document.getElementById('overlay');
@@ -490,6 +642,9 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
+  // Ao entrar na E5, redesenha com o que foi salvo na E4
+  if (currentStep === 5) gerarPost();
+  if (currentStep === 4) drawStep4();
   if (currentStep === 7) { try { buildReview(); } catch (e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
@@ -555,12 +710,15 @@ document.addEventListener('DOMContentLoaded', () => {
     revalidateStepNav();
   });
   document.addEventListener('click', (e) => {
-    if (e.target.matches('[data-next]')) { if (validateStep(currentStep)) showStep(currentStep + 1); }
+    if (e.target.matches('[data-next]')) {
+      if (validateStep(currentStep)) {
+        // Se está saindo da E4, garante que normalizados estão salvos
+        if (currentStep === 4) updateNormalizedFromPixels();
+        showStep(currentStep + 1);
+      }
+    }
     if (e.target.matches('[data-prev]')) showStep(currentStep - 1);
   });
 
   showStep(1);
 });
-
-
-
