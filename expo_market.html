@@ -16,6 +16,9 @@
     .categoria-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin:8px 0 10px}
     .categoria-wrap .radio{display:flex;gap:8px;align-items:center;font-size:16px}
     .categoria-wrap input[type="radio"]{width:18px;height:18px}
+
+    /* Garante overlay escondido por padrão */
+    #overlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(255,255,255,0.7)}
   </style>
 </head>
 
@@ -128,9 +131,7 @@
       </div>
       <div id="categoriaError" class="inline-error"></div>
 
-      <!-- REMOVIDOS: sliders de imagem (a E5 só aplica o que veio da E4) -->
-
-      <!-- Preview FINAL (tamanho grande) -->
+      <!-- Sem sliders: a E5 só aplica o que veio da E4 -->
       <canvas id="canvas5" width="1080" height="1350" style="max-width:100%;display:block;margin:16px auto"></canvas>
 
       <div id="avisoTexto"></div>
@@ -194,8 +195,8 @@
     </div>
   </main>
 
-  <!-- Bump para forçar recarregamento (atualizei o v para evitar cache) -->
-  <script src="app-expo_market.js?v=13"></script>
+  <!-- Bump para forçar recarregamento -->
+  <script src="app-expo_market.js?v=14"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
