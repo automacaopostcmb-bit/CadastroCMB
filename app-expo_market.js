@@ -7,10 +7,26 @@ const FRAME_URL =
 const FRAME_URL_PREVIEW =
   'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_prepreview_expo_market.png';
 
-/* ===== TARJAS (AJUSTE AQUI) =====
-   x e y = posição em px (0,0 no canto superior esquerdo do canvas)
-   scale = multiplicador do tamanho (1 = 100%)
+/* Tamanho do canvas final (E5) */
+const FINAL_CANVAS = { w: 1080, h: 1350 };
+
+/* ⭐ MAPA DO RECORTE: qual trecho do poster final (E5) o pré-preview (E4) representa
+   Valores em PIXELS do canvas final (1080x1350).
+   Ajuste estes 4 valores para alinhar perfeitamente!
+   Dica: abra os dois frames lado a lado e meça onde o "miolo" do pré-preview
+   fica dentro do layout final.
+
+   x,y  -> canto superior esquerdo do recorte dentro do poster final
+   width,height -> tamanho desse recorte dentro do poster final
 */
+const PREVIEW_CROP_IN_FINAL = {
+  x: 32,      // << ajuste fino
+  y: 210,     // << ajuste fino
+  width: 1016, // << ajuste fino
+  height: 770  // << ajuste fino
+};
+
+/* TARJAS (fixas no final) */
 const TARJAS = {
   artista: { src: 'assets/tarja-artista.png', x: 90, y: 190, scale: 0.2 },
   empresa: { src: 'assets/tarja-empresa.png', x: 90, y: 190, scale: 0.2 }
@@ -82,7 +98,7 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 function loadImage(src) {
-  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now(); // cache-buster
+  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now();
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -95,41 +111,35 @@ function loadImage(src) {
 /* ===========================
    VARS DO CANVAS / PREVIEW
    =========================== */
-// Etapa 4 (preview menor)
-let canvas4, ctx4, frameImgPreview;
-// Etapa 5 (preview final)
-let canvas5, ctx5, frameImg;
-
-// Alias mantidos para download/envio
-let canvas, ctx;
+let canvas4, ctx4, frameImgPreview;   // etapa 4
+let canvas5, ctx5, frameImg;          // etapa 5 (final)
+let canvas, ctx;                      // alias para funções comuns (usa o final)
 
 let logoImg = null;
 let lateralImg = null;
 
 let tarjaImg = null, tarjaCfg = null, categoriaSelecionada = null;
 
-/* Estado da imagem de apoio (E4, em px) */
+/* Estado da imagem de apoio no E4 (pixel do preview) */
 let posX4 = 0, posY4 = 0, drawnW4 = 0;
 
-/* Estado NORMALIZADO (contrato E4->E5) */
-let apoio_nX = 0.3, apoio_nY = 0.3, apoio_nW = 0.4;
+/* Estado NORMALIZADO no espaço do PREVIEW (0..1 dentro do canvas4) */
+let apoio_pX = 0.3, apoio_pY = 0.3, apoio_pW = 0.4;
 
 /* ===========================
    CANVAS
    =========================== */
 function initCanvas() {
-  // CANVAS
   canvas4 = document.getElementById('canvas4');
   ctx4 = canvas4 ? canvas4.getContext('2d') : null;
 
   canvas5 = document.getElementById('canvas5');
   ctx5 = canvas5 ? canvas5.getContext('2d') : null;
 
-  // Alias para funções que usam canvas final
   canvas = canvas5;
   ctx = ctx5;
 
-  // Frame final (E5)
+  // frame final
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
@@ -137,7 +147,7 @@ function initCanvas() {
   frameImg.onerror = () => console.error('Falha ao carregar frame:', FRAME_URL);
   frameImg.src = FRAME_URL + '?v=' + Date.now();
 
-  // Frame do pré-preview (E4)
+  // frame do pré-preview
   frameImgPreview = new Image();
   frameImgPreview.crossOrigin = 'anonymous';
   frameImgPreview.referrerPolicy = 'no-referrer';
@@ -145,7 +155,7 @@ function initCanvas() {
   frameImgPreview.onerror = () => console.error('Falha ao carregar frame preview:', FRAME_URL_PREVIEW);
   frameImgPreview.src = FRAME_URL_PREVIEW + '?v=' + Date.now();
 
-  // Uploads
+  // uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
 
@@ -163,9 +173,9 @@ function initCanvas() {
       localStorage.setItem('apoio_b64', ev.target.result); // para E5
       lateralImg = new Image();
       lateralImg.onload = () => {
-        // tamanho inicial: 40% da largura do preview (controlamos por %)
-        apoio_nW = 0.4;
-        drawnW4 = canvas4.width * apoio_nW;
+        // inicial: 40% da largura do preview
+        apoio_pW = 0.4;
+        drawnW4 = canvas4.width * apoio_pW;
         const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
         posX4 = (canvas4.width - drawnW4) / 2;
         posY4 = (canvas4.height - drawnH4) / 2;
@@ -179,7 +189,7 @@ function initCanvas() {
     r.readAsDataURL(f);
   });
 
-  // Sliders (somente E4)
+  // sliders (E4)
   document.getElementById('imgScale4')?.addEventListener('input', () => {
     if (!canvas4 || !lateralImg) return;
     const pct = parseFloat(document.getElementById('imgScale4').value || '40'); // 10..90
@@ -187,6 +197,7 @@ function initCanvas() {
     clampPosE4();
     updateNormalizedFromPreview();
     drawStep4();
+    gerarPost(); // reflete no final
   });
   document.getElementById('imgX4')?.addEventListener('input', () => {
     if (!canvas4 || !lateralImg) return;
@@ -197,6 +208,7 @@ function initCanvas() {
     posY4 = Math.max(0, Math.min(posY4, canvas4.height - drawnH4));
     updateNormalizedFromPreview();
     drawStep4();
+    gerarPost();
   });
   document.getElementById('imgY4')?.addEventListener('input', () => {
     if (!canvas4 || !lateralImg) return;
@@ -207,9 +219,10 @@ function initCanvas() {
     posX4 = Math.max(0, Math.min(posX4, canvas4.width - drawnW4));
     updateNormalizedFromPreview();
     drawStep4();
+    gerarPost();
   });
 
-  // Título/descrição atualizam E5
+  // textos (E5)
   ['titulo', 'descricao'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', gerarPost);
   });
@@ -218,43 +231,38 @@ function initCanvas() {
   document.fonts?.ready?.then(() => { drawStep4(); gerarPost(); });
 }
 
-/* ---- radios + tarja (sem sliders) ---- */
+/* ---- radios + tarja ---- */
 function bindCategoriaRadios() {
   const radios = document.querySelectorAll('input[name="categoria"]');
   radios.forEach((radio) => {
     radio.addEventListener('change', () => selectCategoria(radio.value));
   });
-
   const pre = document.querySelector('input[name="categoria"]:checked');
   if (pre) selectCategoria(pre.value);
 }
 async function selectCategoria(value) {
   categoriaSelecionada = value;
-  tarjaCfg = { ...TARJAS[value] };     // valores fixos
-  try {
-    tarjaImg = await loadImage(tarjaCfg.src);
-  } catch (e) {
-    console.error('Não foi possível carregar a tarja:', e);
-    tarjaImg = null;
-  }
+  tarjaCfg = { ...TARJAS[value] };
+  try { tarjaImg = await loadImage(tarjaCfg.src); }
+  catch(e){ console.error('Não foi possível carregar a tarja:', e); tarjaImg = null; }
   drawStep4();
   gerarPost();
   revalidateStepNav();
 }
 
 /* ===========================
-   CONVERSÃO PREVIEW->NORMALIZADO
+   PREVIEW -> NORMALIZADO (ESPAÇO DO PREVIEW)
    =========================== */
 function updateNormalizedFromPreview() {
   if (!canvas4 || !lateralImg) return;
-  // Salvamos frações relativas ao preview — e reconstruímos proporcionalmente no final
-  apoio_nX = posX4 / canvas4.width;
-  apoio_nY = posY4 / canvas4.height;
-  apoio_nW = drawnW4 / canvas4.width;
+  apoio_pX = posX4 / canvas4.width;
+  apoio_pY = posY4 / canvas4.height;
+  apoio_pW = drawnW4 / canvas4.width;
 
-  localStorage.setItem('apoio_nX', String(apoio_nX));
-  localStorage.setItem('apoio_nY', String(apoio_nY));
-  localStorage.setItem('apoio_nW', String(apoio_nW));
+  // guarda para reaplicar na E5
+  localStorage.setItem('apoio_pX', String(apoio_pX));
+  localStorage.setItem('apoio_pY', String(apoio_pY));
+  localStorage.setItem('apoio_pW', String(apoio_pW));
 }
 
 function clampPosE4() {
@@ -265,43 +273,50 @@ function clampPosE4() {
 }
 
 /* ===========================
-   DESENHO: ETAPA 4 (preview)
+   DESENHO: ETAPA 4
    =========================== */
 function drawStep4() {
   if (!ctx4 || !canvas4) return;
-
   ctx4.clearRect(0, 0, canvas4.width, canvas4.height);
   ctx4.fillStyle = '#fff';
   ctx4.fillRect(0, 0, canvas4.width, canvas4.height);
 
-  // imagem de apoio
   if (lateralImg && drawnW4 > 0) {
     const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
     ctx4.drawImage(lateralImg, posX4, posY4, drawnW4, drawnH4);
   }
-
-  // frame do pré-preview
   if (frameImgPreview?.complete && frameImgPreview.naturalWidth) {
     ctx4.drawImage(frameImgPreview, 0, 0, canvas4.width, canvas4.height);
   }
 }
 
 /* ===========================
-   DESENHO: ETAPA 5 (final)
+   DESENHO: ETAPA 5 (conversão preview->final)
    =========================== */
 function gerarPost() {
   if (!ctx5 || !canvas5) return;
 
-  // lê normalizados (ou defaults)
-  const nx = parseFloat(localStorage.getItem('apoio_nX') || `${apoio_nX}`) || 0;
-  const ny = parseFloat(localStorage.getItem('apoio_nY') || `${apoio_nY}`) || 0;
-  const nw = parseFloat(localStorage.getItem('apoio_nW') || `${apoio_nW}`) || 0.4;
+  // lê normalizados no espaço do PREVIEW
+  const pX = parseFloat(localStorage.getItem('apoio_pX') || `${apoio_pX}`) || 0;
+  const pY = parseFloat(localStorage.getItem('apoio_pY') || `${apoio_pY}`) || 0;
+  const pW = parseFloat(localStorage.getItem('apoio_pW') || `${apoio_pW}`) || 0.4;
 
+  // converte: preview (0..1) -> área recortada dentro do poster final
+  const crop = PREVIEW_CROP_IN_FINAL;
+  const nx = (crop.x + pX * crop.width) / FINAL_CANVAS.w;
+  const ny = (crop.y + pY * crop.height) / FINAL_CANVAS.h;
+  const nw = (pW * crop.width) / FINAL_CANVAS.w;
+
+  // render
   ctx5.clearRect(0, 0, canvas5.width, canvas5.height);
   ctx5.fillStyle = '#fff';
   ctx5.fillRect(0, 0, canvas5.width, canvas5.height);
 
-  // imagem de apoio (reconstrução proporcional)
+  drawEverythingStep5(nx, ny, nw);
+}
+
+function drawEverythingStep5(nx, ny, nw) {
+  // imagem de apoio
   if (!lateralImg) {
     const b64 = localStorage.getItem('apoio_b64');
     if (b64) {
@@ -311,11 +326,6 @@ function gerarPost() {
       return;
     }
   }
-  drawEverythingStep5(nx, ny, nw);
-}
-
-function drawEverythingStep5(nx, ny, nw) {
-  // fundo branco já aplicado
   if (lateralImg) {
     const drawnW5 = nw * canvas5.width;
     const drawnH5 = drawnW5 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
@@ -329,7 +339,7 @@ function drawEverythingStep5(nx, ny, nw) {
     ctx5.drawImage(frameImg, 0, 0, canvas5.width, canvas5.height);
   }
 
-  // tarja (sobre o frame)
+  // tarja
   if (tarjaCfg) {
     if (tarjaImg) {
       const w = tarjaImg.naturalWidth * tarjaCfg.scale;
@@ -353,7 +363,7 @@ function drawEverythingStep5(nx, ny, nw) {
     ctx5.drawImage(logoImg, (canvas5.width - w) / 2, centerY - h / 2, w, h);
   }
 
-  // título
+  // títulos/descrição
   const titulo = (document.getElementById('titulo')?.value || '').trim();
   ctx5.font = 'bold 48px "Comic Relief"';
   ctx5.fillStyle = '#FFFFFF';
@@ -367,7 +377,6 @@ function drawEverythingStep5(nx, ny, nw) {
   let offsetY = (linhasTituloSlice.length === 1) ? 30 : 0;
   linhasTituloSlice.forEach((linha, i) => ctx5.fillText(linha, tituloX, tituloYBase + i * 54 + offsetY));
 
-  // descrição
   const descricao = (document.getElementById('descricao')?.value || '').trim();
   ctx5.font = '28px "Comic Relief"';
   ctx5.fillStyle = '#333';
@@ -386,7 +395,7 @@ function drawEverythingStep5(nx, ny, nw) {
 }
 
 /* ===========================
-   TEXT WRAP
+   TEXT WRAP / DOWNLOAD
    =========================== */
 function wrapText(text, maxWidth, context) {
   const palavras = text.split(' ');
@@ -405,7 +414,6 @@ function wrapText(text, maxWidth, context) {
   if (linha !== '') linhas.push(linha.trim());
   return linhas;
 }
-
 function baixarImagem() {
   const link = document.createElement('a');
   link.download = 'post.png';
@@ -470,9 +478,10 @@ async function enviarParaGoogle() {
     background: backgroundBase64,
     preview: previewBase64,
     categoria: categoriaSelecionada || '',
-    apoio_nX: parseFloat(localStorage.getItem('apoio_nX') || `${apoio_nX}`),
-    apoio_nY: parseFloat(localStorage.getItem('apoio_nY') || `${apoio_nY}`),
-    apoio_nW: parseFloat(localStorage.getItem('apoio_nW') || `${apoio_nW}`)
+    // salva também a posição no espaço do preview (se quiser reprocessar depois no Apps Script)
+    apoio_pX: parseFloat(localStorage.getItem('apoio_pX') || `${apoio_pX}`),
+    apoio_pY: parseFloat(localStorage.getItem('apoio_pY') || `${apoio_pY}`),
+    apoio_pW: parseFloat(localStorage.getItem('apoio_pW') || `${apoio_pW}`)
   };
 
   const overlay = document.getElementById('overlay');
@@ -627,16 +636,11 @@ function validateStep(stepNumber) {
 
   return true;
 }
-
-/* Habilita/Desabilita “Próximo” da etapa ativa */
 function revalidateStepNav() {
   const activeStep = steps[currentStep - 1];
   const nextBtn = activeStep?.querySelector('[data-next]');
   if (!nextBtn) return;
-
-  // Etapa 1 não tem requisitos — mantém habilitada
-  if (currentStep === 1) { nextBtn.disabled = false; return; }
-
+  if (currentStep === 1) { nextBtn.disabled = false; return; } // etapa 1 sempre livre
   const isValid = validateStep(currentStep);
   nextBtn.disabled = !isValid;
 }
@@ -648,11 +652,10 @@ function updateIndicator() {
 }
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
-  // além da classe, controla display para não sobrepor cliques
   steps.forEach((el, idx) => {
     const active = idx === currentStep - 1;
     el.classList.toggle('active', active);
-    el.style.display = active ? 'block' : 'none';
+    el.style.display = active ? 'block' : 'none'; // impede sobreposição
   });
 
   if (currentStep === 5) gerarPost();
@@ -697,7 +700,7 @@ function goToMenu() {
    BOOTSTRAP
    =========================== */
 document.addEventListener('DOMContentLoaded', () => {
-  // garante overlay escondido ao iniciar (evita bloquear clique)
+  // overlay escondido (não bloquear clique)
   const overlay = document.getElementById('overlay');
   if (overlay) overlay.style.display = 'none';
 
@@ -729,14 +732,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (e) => {
     if (e.target.matches('[data-next]')) {
       if (validateStep(currentStep)) {
-        // saindo da E4? garante normalizados salvos
-        if (currentStep === 4) updateNormalizedFromPreview();
+        if (currentStep === 4) updateNormalizedFromPreview(); // garante sync
         showStep(currentStep + 1);
       }
     }
     if (e.target.matches('[data-prev]')) showStep(currentStep - 1);
   });
 
-  // inicia mostrando só a etapa 1
   showStep(1);
 });
