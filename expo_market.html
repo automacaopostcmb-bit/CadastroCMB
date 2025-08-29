@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Gerador de Post</title>
 
-  <!-- Fonte usada no canvas -->
   <link href="https://fonts.googleapis.com/css2?family=Comic+Relief&display=swap" rel="stylesheet">
-
-  <!-- CSS externo -->
   <link rel="stylesheet" href="style.css?v=10">
-
-  <!-- Estilo leve local (pode mover para style.css) -->
   <style>
     .categoria-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin:8px 0 10px}
     .categoria-wrap .radio{display:flex;gap:8px;align-items:center;font-size:16px}
     .categoria-wrap input[type="radio"]{width:18px;height:18px}
+
+    /* etapas não ativas não ocupam espaço (evita bloquear clique) */
+    .step{display:none}
+    .step.active{display:block}
+
+    /* overlay começa escondido */
+    #overlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(255,255,255,0.7)}
   </style>
 </head>
 
@@ -27,7 +29,7 @@
     <!-- ========== ETAPA 1 ========== -->
     <section class="step active" id="step1">
       <div class="faixa-secao"><span>Boas-vindas</span></div>
-      <div id="intro-content" class="intro-box">
+      <div class="intro-box">
         <h2>Cadastro de expositor na área Market do CMB 🎉</h2>
         <p>Preencha seus dados e no fim, você poderá fazer o download da imagem gerada para divulgação.</p>
         <p>Clique em <strong>Próximo</strong> para começar!</p>
@@ -40,18 +42,14 @@
     <!-- ========== ETAPA 2 ========== -->
     <section class="step" id="step2">
       <div class="faixa-secao"><span>Sobre você:</span></div>
-
       <label class="title-label">Seu nome:</label>
       <input type="text" id="nome" />
-
       <label class="title-label">E-mail:</label>
       <input type="email" id="email" placeholder="seu@email.com" />
       <div id="emailError" class="inline-error"></div>
-
       <label class="title-label">Número de telefone</label>
       <input type="tel" id="telefone" placeholder="(00) 00000-0000" />
       <div id="telefoneError" class="inline-error"></div>
-
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
@@ -61,27 +59,23 @@
     <!-- ========== ETAPA 3 ========== -->
     <section class="step" id="step3">
       <div class="faixa-secao"><span>Sobre sua empresa:</span></div>
-
       <label class="title-label">Nome da sua empresa:</label>
       <input type="text" id="empresa" />
-
       <label class="title-label">Site:</label>
       <div class="hint">(Cole o link do seu site. Caso não tenha, pode ser o link da sua rede social)</div>
       <input type="text" id="site" />
       <div id="siteError" class="inline-error"></div>
-
       <label class="title-label">Instagram:</label>
       <div class="hint">(Escreva o seu @, não o link)</div>
       <input type="text" id="insta" placeholder="@" />
       <div id="instaError" class="inline-error"></div>
-
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
       </div>
     </section>
 
-    <!-- ========== ETAPA 4 ========== -->
+    <!-- ========== ETAPA 4 (pré-preview com CROP) ========== -->
     <section class="step" id="step4">
       <div class="faixa-secao"><span>Imagens</span></div>
 
@@ -93,38 +87,35 @@
       <div class="hint">(Outra imagem que podemos usar para mostrar mais de você.)</div>
       <input type="file" id="lateral" accept="image/*" />
 
+      <div class="faixa-secao"><span>Pré-posicionamento da imagem de apoio</span></div>
+      <label class="title-label">Tamanho (rel. ao miolo)</label>
+      <input type="range" id="size4" min="10" max="120" step="1" value="40" />
+      <label class="title-label">Posição horizontal</label>
+      <input type="range" id="x4" min="0" max="100" step="1" value="50" />
+      <label class="title-label">Posição vertical</label>
+      <input type="range" id="y4" min="0" max="100" step="1" value="50" />
+
+      <!-- Canvas do pré-preview: 771x1173 -->
+      <canvas id="canvas4" width="771" height="1173" style="display:block;max-width:100%;margin:16px auto"></canvas>
+
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
       </div>
     </section>
 
-    <!-- ========== ETAPA 5 ========== -->
+    <!-- ========== ETAPA 5 (poster final) ========== -->
     <section class="step" id="step5">
       <div class="faixa-secao"><span>Vamos criar a sua divulgação!</span></div>
 
       <div class="faixa-secao"><span>Selecione a sua categoria:</span></div>
       <div class="categoria-wrap" id="categoriaWrap">
-        <label class="radio">
-          <input type="radio" name="categoria" id="cat-artista" value="artista">
-          artista confirmado
-        </label>
-        <label class="radio">
-          <input type="radio" name="categoria" id="cat-empresa" value="empresa">
-          empresa confirmada
-        </label>
+        <label class="radio"><input type="radio" name="categoria" value="artista"> artista confirmado</label>
+        <label class="radio"><input type="radio" name="categoria" value="empresa"> empresa confirmada</label>
       </div>
       <div id="categoriaError" class="inline-error"></div>
 
-      <div class="faixa-secao"><span>Imagem de apoio</span></div>
-      <label class="title-label">Tamanho</label>
-      <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
-      <label class="title-label">Mover horizontalmente</label>
-      <input type="range" id="imgX" min="-500" max="500" value="0" />
-      <label class="title-label">Mover verticalmente</label>
-      <input type="range" id="imgY" min="-500" max="500" value="0" />
-
-      <canvas id="canvas" width="1080" height="1350"></canvas>
+      <canvas id="canvas5" width="1080" height="1350" style="display:block;max-width:100%;margin:16px auto"></canvas>
 
       <div id="avisoTexto"></div>
 
@@ -147,10 +138,8 @@
       <label class="title-label">Texto complementar</label>
       <div class="hint">(Biografia ou texto maior sobre você ou seu trabalho.)</div>
       <textarea id="descricaolonga" rows="8"></textarea>
-
       <label class="title-label">Tem alguma outra imagem para nos mandar?</label>
       <input type="file" id="background" accept="image/*" />
-
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
@@ -162,7 +151,6 @@
       <div class="faixa-secao"><span>Confira suas informações</span></div>
       <div id="review-list" class="review-box"></div>
       <div id="mensagem"></div>
-
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" id="botao-enviar" onclick="enviarParaGoogle()">Enviar informações</button>
@@ -187,8 +175,7 @@
     </div>
   </main>
 
-  <!-- Bump para forçar recarregamento -->
-  <script src="app-expo_market.js?v=16"></script>
+  <script src="app-expo_market.js?v=20"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -199,5 +186,3 @@
   </footer>
 </body>
 </html>
-
-
