@@ -10,42 +10,41 @@
 
   <!-- CSS externo -->
   <link rel="stylesheet" href="style.css?v=10">
+
+  <!-- Estilo leve local (pode mover para style.css) -->
+  <style>
+    .categoria-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin:8px 0 10px}
+    .categoria-wrap .radio{display:flex;gap:8px;align-items:center;font-size:16px}
+    .categoria-wrap input[type="radio"]{width:18px;height:18px}
+    /* Controles da tarja ficam escondidos até escolher a categoria */
+    #tarjaControls{display:none;}
+  </style>
 </head>
 
 <body>
-  <!-- CONTEÚDO PRINCIPAL (cresce e empurra o rodapé) -->
   <main class="page-center">
-    <!-- Link de retorno (escondido na tela final) -->
     <a class="link-voltar" id="link-topo" href="index.html?back=1">Voltar/Menu</a>
-
-    <!-- Indicador da etapa -->
     <div id="wizard-indicator">Etapa 1 de 7</div>
 
-    <!-- ========== ETAPA 1 — INTRODUÇÃO (APENAS PRÓXIMO) ========== -->
+    <!-- ========== ETAPA 1 ========== -->
     <section class="step active" id="step1">
       <div class="faixa-secao"><span>Boas-vindas</span></div>
-
       <div id="intro-content" class="intro-box">
         <h2>Cadastro de expositor na área Market do CMB 🎉</h2>
-        <p>
-          Preencha seus dados e no fim, você poderá fazer o
-          download da imagem gerada para divulgação. 
-          Fique atento as informações pedidas. Caso algo esteja faltando, o botão <em>Próximo</em> ficará desabilitado até você ajustar.
-        </p>
+        <p>Preencha seus dados e no fim, você poderá fazer o download da imagem gerada para divulgação.</p>
         <p>Clique em <strong>Próximo</strong> para começar!</p>
       </div>
-
       <div class="button-row">
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
       </div>
     </section>
 
-    <!-- ========== ETAPA 2 — SOBRE VOCÊ ========== -->
+    <!-- ========== ETAPA 2 ========== -->
     <section class="step" id="step2">
       <div class="faixa-secao"><span>Sobre você:</span></div>
 
       <label class="title-label">Seu nome:</label>
-      <input type="text" id="nome" placeholder="" />
+      <input type="text" id="nome" />
 
       <label class="title-label">E-mail:</label>
       <input type="email" id="email" placeholder="seu@email.com" />
@@ -61,16 +60,16 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 3 — EMPRESA ========== -->
+    <!-- ========== ETAPA 3 ========== -->
     <section class="step" id="step3">
       <div class="faixa-secao"><span>Sobre sua empresa:</span></div>
 
       <label class="title-label">Nome da sua empresa:</label>
-      <input type="text" id="empresa" placeholder="" />
+      <input type="text" id="empresa" />
 
       <label class="title-label">Site:</label>
       <div class="hint">(Cole o link do seu site. Caso não tenha, pode ser o link da sua rede social)</div>
-      <input type="text" id="site" placeholder="" />
+      <input type="text" id="site" />
       <div id="siteError" class="inline-error"></div>
 
       <label class="title-label">Instagram:</label>
@@ -84,16 +83,16 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 4 — IMAGENS (UPLOADS) ========== -->
+    <!-- ========== ETAPA 4 ========== -->
     <section class="step" id="step4">
       <div class="faixa-secao"><span>Imagens</span></div>
 
       <label class="title-label">Envie o seu Logo com fundo transparente:</label>
-      <div class="hint">(Use uma imagem sem bordas. Ou seja, que não tenha espaços nas laterais, mesmo que transparentes.)</div>
+      <div class="hint">(Use uma imagem sem bordas, mesmo que transparentes.)</div>
       <input type="file" id="logo" accept="image/*" />
 
       <label class="title-label">Envie uma imagem de apoio:</label>
-      <div class="hint">(Qual outra imagem poderíamos usar quando formos mostrar mais de você?)</div>
+      <div class="hint">(Outra imagem que podemos usar para mostrar mais de você.)</div>
       <input type="file" id="lateral" accept="image/*" />
 
       <div class="button-row">
@@ -102,20 +101,43 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 5 — PREVIEW / TÍTULO / DESCRIÇÃO ========== -->
+    <!-- ========== ETAPA 5 ========== -->
     <section class="step" id="step5">
       <div class="faixa-secao"><span>Vamos criar a sua divulgação!</span></div>
 
-      <label class="title-label">Tamanho da imagem de apoio</label>
-      <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
+      <div class="faixa-secao"><span>Selecione a sua categoria:</span></div>
+      <div class="categoria-wrap" id="categoriaWrap">
+        <label class="radio">
+          <input type="radio" name="categoria" id="cat-artista" value="artista">
+          artista confirmado
+        </label>
+        <label class="radio">
+          <input type="radio" name="categoria" id="cat-empresa" value="empresa">
+          empresa confirmada
+        </label>
+      </div>
+      <div id="categoriaError" class="inline-error"></div>
 
+      <div class="faixa-secao"><span>Imagem de apoio</span></div>
+      <label class="title-label">Tamanho</label>
+      <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
       <label class="title-label">Mover horizontalmente</label>
       <input type="range" id="imgX" min="-500" max="500" value="0" />
-
       <label class="title-label">Mover verticalmente</label>
       <input type="range" id="imgY" min="-500" max="500" value="0" />
 
       <canvas id="canvas" width="1080" height="1350"></canvas>
+
+      <!-- Controles da tarja (únicos) -->
+      <div id="tarjaControls">
+        <div class="faixa-secao"><span>Ajustes da tarja</span></div>
+        <label class="title-label">Tamanho da tarja</label>
+        <input type="range" id="tarjaScale" min="0.2" max="3" step="0.01" value="1">
+        <label class="title-label">Mover tarja horizontalmente</label>
+        <input type="range" id="tarjaX" min="-1000" max="1000" value="0">
+        <label class="title-label">Mover tarja verticalmente</label>
+        <input type="range" id="tarjaY" min="-1000" max="1000" value="0">
+      </div>
 
       <div id="avisoTexto"></div>
 
@@ -124,7 +146,7 @@
       <input type="text" id="titulo" placeholder="Título" />
 
       <label class="title-label">Crie uma breve descrição:</label>
-      <textarea id="descricao" rows="4" placeholder=""></textarea>
+      <textarea id="descricao" rows="4"></textarea>
 
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
@@ -132,13 +154,12 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 6 — BIO (SEM ENVIAR) ========== -->
+    <!-- ========== ETAPA 6 ========== -->
     <section class="step" id="step6">
       <div class="faixa-secao"><span>Informações adicionais:</span></div>
-      
       <label class="title-label">Texto complementar</label>
-      <div class="hint">(Biografia ou texto maior de você ou do seu trabalho. Quanto mais informações nos der, melhor conseguiremos te divulgar.)</div>
-      <textarea id="descricaolonga" rows="8" placeholder=""></textarea>
+      <div class="hint">(Biografia ou texto maior sobre você ou seu trabalho.)</div>
+      <textarea id="descricaolonga" rows="8"></textarea>
 
       <label class="title-label">Tem alguma outra imagem para nos mandar?</label>
       <input type="file" id="background" accept="image/*" />
@@ -149,35 +170,28 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 7 — REVISÃO + ENVIAR ========== -->
+    <!-- ========== ETAPA 7 ========== -->
     <section class="step" id="step7">
       <div class="faixa-secao"><span>Confira suas informações</span></div>
-
-      <!-- Lista gerada via JS a partir de REVIEW_FIELDS -->
       <div id="review-list" class="review-box"></div>
-
-      <!-- Mensagens de envio -->
       <div id="mensagem"></div>
 
-      <!-- Botões: Voltar + Enviar (não tem "Próximo") -->
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" id="botao-enviar" onclick="enviarParaGoogle()">Enviar informações</button>
       </div>
     </section>
 
-    <!-- ========== TELA FINAL (PÓS-ENVIO) ========== -->
+    <!-- FINAL -->
     <section id="final-screen" class="final-screen">
       <div class="final-card">
         <h2>✅ Enviado com sucesso!</h2>
         <p>Obrigado por enviar suas informações. Você já pode baixar a imagem.</p>
-
         <button class="btn-download" id="btn-final-download" onclick="baixarImagem()">Baixar Imagem</button>
         <button class="btn-menu" id="btn-menu" onclick="goToMenu()">Menu</button>
       </div>
     </section>
 
-    <!-- Overlay "Enviando..." com GIF -->
     <div id="overlay">
       <div class="loader">
         <img src="assets/loading.gif" alt="Carregando" class="loader-gif">
@@ -186,10 +200,9 @@
     </div>
   </main>
 
-  <!-- JS externo -->
-  <script src="app-expo_market.js?v=1"></script>
+  <!-- BUMPEI A VERSÃO PARA FORÇAR RECARREGAMENTO -->
+  <script src="app-expo_market.js?v=5"></script>
 
-  <!-- RODAPÉ (fora do main, gruda no fim) -->
   <footer class="site-footer">
     <div class="footer-inner">
       <strong>Criado por Bruno Lima • </strong>
@@ -199,6 +212,3 @@
   </footer>
 </body>
 </html>
-
-
-
