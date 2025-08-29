@@ -16,9 +16,6 @@
     .categoria-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin:8px 0 10px}
     .categoria-wrap .radio{display:flex;gap:8px;align-items:center;font-size:16px}
     .categoria-wrap input[type="radio"]{width:18px;height:18px}
-
-    /* Garante overlay escondido por padrão */
-    #overlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(255,255,255,0.7)}
   </style>
 </head>
 
@@ -96,18 +93,6 @@
       <div class="hint">(Outra imagem que podemos usar para mostrar mais de você.)</div>
       <input type="file" id="lateral" accept="image/*" />
 
-      <!-- Controles de posicionamento (SOMENTE NA ETAPA 4) -->
-      <div class="faixa-secao"><span>Pré-posicionamento da imagem de apoio</span></div>
-      <label class="title-label">Tamanho (largura % do preview)</label>
-      <input type="range" id="imgScale4" min="10" max="90" step="1" value="40" />
-      <label class="title-label">Posição horizontal</label>
-      <input type="range" id="imgX4" min="0" max="100" step="1" value="50" />
-      <label class="title-label">Posição vertical</label>
-      <input type="range" id="imgY4" min="0" max="100" step="1" value="50" />
-
-      <!-- Preview menor da etapa 4 (usa FRAME_URL_PREVIEW no JS) -->
-      <canvas id="canvas4" width="540" height="675" style="max-width:100%;display:block;margin:16px auto"></canvas>
-
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
@@ -131,8 +116,15 @@
       </div>
       <div id="categoriaError" class="inline-error"></div>
 
-      <!-- Sem sliders: a E5 só aplica o que veio da E4 -->
-      <canvas id="canvas5" width="1080" height="1350" style="max-width:100%;display:block;margin:16px auto"></canvas>
+      <div class="faixa-secao"><span>Imagem de apoio</span></div>
+      <label class="title-label">Tamanho</label>
+      <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
+      <label class="title-label">Mover horizontalmente</label>
+      <input type="range" id="imgX" min="-500" max="500" value="0" />
+      <label class="title-label">Mover verticalmente</label>
+      <input type="range" id="imgY" min="-500" max="500" value="0" />
+
+      <canvas id="canvas" width="1080" height="1350"></canvas>
 
       <div id="avisoTexto"></div>
 
@@ -196,7 +188,7 @@
   </main>
 
   <!-- Bump para forçar recarregamento -->
-  <script src="app-expo_market.js?v=14"></script>
+  <script src="app-expo_market.js?v=16"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -207,3 +199,5 @@
   </footer>
 </body>
 </html>
+
+
