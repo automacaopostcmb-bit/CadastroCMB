@@ -16,8 +16,6 @@
     .categoria-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin:8px 0 10px}
     .categoria-wrap .radio{display:flex;gap:8px;align-items:center;font-size:16px}
     .categoria-wrap input[type="radio"]{width:18px;height:18px}
-    /* Controles da tarja ficam escondidos até escolher a categoria */
-    #tarjaControls{display:none;}
   </style>
 </head>
 
@@ -128,17 +126,6 @@
 
       <canvas id="canvas" width="1080" height="1350"></canvas>
 
-      <!-- Controles da tarja (únicos) -->
-      <div id="tarjaControls">
-        <div class="faixa-secao"><span>Ajustes da tarja</span></div>
-        <label class="title-label">Tamanho da tarja</label>
-        <input type="range" id="tarjaScale" min="0.2" max="3" step="0.01" value="1">
-        <label class="title-label">Mover tarja horizontalmente</label>
-        <input type="range" id="tarjaX" min="-1000" max="1000" value="0">
-        <label class="title-label">Mover tarja verticalmente</label>
-        <input type="range" id="tarjaY" min="-1000" max="1000" value="0">
-      </div>
-
       <div id="avisoTexto"></div>
 
       <label class="title-label">Frase que defina o que você faz</label>
@@ -200,7 +187,7 @@
     </div>
   </main>
 
-  <!-- BUMPEI A VERSÃO PARA FORÇAR RECARREGAMENTO -->
+  <!-- Bump para forçar recarregamento -->
   <script src="app-expo_market.js?v=7"></script>
 
   <footer class="site-footer">
@@ -212,5 +199,3 @@
   </footer>
 </body>
 </html>
-
-
