@@ -308,6 +308,7 @@ function gerarPost() {
       lateralImg = new Image();
       lateralImg.onload = () => drawEverythingStep5(nx, ny, nw);
       lateralImg.src = b64;
+      return;
     }
   }
   drawEverythingStep5(nx, ny, nw);
@@ -626,11 +627,18 @@ function validateStep(stepNumber) {
 
   return true;
 }
+
+/* Habilita/Desabilita “Próximo” da etapa ativa */
 function revalidateStepNav() {
   const activeStep = steps[currentStep - 1];
-  const isValid = validateStep(currentStep);
   const nextBtn = activeStep?.querySelector('[data-next]');
-  if (nextBtn) nextBtn.disabled = !isValid;
+  if (!nextBtn) return;
+
+  // Etapa 1 não tem requisitos — mantém habilitada
+  if (currentStep === 1) { nextBtn.disabled = false; return; }
+
+  const isValid = validateStep(currentStep);
+  nextBtn.disabled = !isValid;
 }
 
 let steps = [], totalSteps = 0, currentStep = 1;
@@ -640,7 +648,12 @@ function updateIndicator() {
 }
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
-  steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
+  // além da classe, controla display para não sobrepor cliques
+  steps.forEach((el, idx) => {
+    const active = idx === currentStep - 1;
+    el.classList.toggle('active', active);
+    el.style.display = active ? 'block' : 'none';
+  });
 
   if (currentStep === 5) gerarPost();
   if (currentStep === 4) drawStep4();
@@ -684,7 +697,7 @@ function goToMenu() {
    BOOTSTRAP
    =========================== */
 document.addEventListener('DOMContentLoaded', () => {
-  // garante overlay escondido ao iniciar (não bloquear cliques)
+  // garante overlay escondido ao iniciar (evita bloquear clique)
   const overlay = document.getElementById('overlay');
   if (overlay) overlay.style.display = 'none';
 
@@ -724,5 +737,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.matches('[data-prev]')) showStep(currentStep - 1);
   });
 
+  // inicia mostrando só a etapa 1
   showStep(1);
 });
