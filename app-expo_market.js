@@ -6,8 +6,8 @@ const FRAME_URL =
 
 /* ===== TARJAS (AJUSTE AQUI) ===== */
 const TARJAS = {
-  artista: { src: 'assets/tarja-artista.png', x: 110, y: 190, scale: 1.0 },
-  empresa: { src: 'assets/tarja-empresa.png', x: 110, y: 190, scale: 1.0 }
+  artista: { src: 'assets/tarja-artista.png', x: 110, y: 190, scale: 0.1 },
+  empresa: { src: 'assets/tarja-empresa.png', x: 110, y: 190, scale: 0.1 }
 };
 
 const CHAR_LIMITS = { titulo: { min: 5, max: 60 }, descricao: { min: 150, max: 250 } };
@@ -592,3 +592,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
