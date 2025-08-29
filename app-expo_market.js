@@ -4,10 +4,13 @@
 const FRAME_URL =
   'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
 
-/* ===== TARJAS (AJUSTE AQUI) ===== */
+/* ===== TARJAS (AJUSTE AQUI) =====
+   x e y = posição em px (0,0 no canto superior esquerdo do canvas)
+   scale = multiplicador do tamanho (1 = 100%)
+*/
 const TARJAS = {
-  artista: { src: 'assets/tarja-artista.png', x: 100, y: 190, scale: 0.5 },
-  empresa: { src: 'assets/tarja-empresa.png', x: 100, y: 190, scale: 0.5 }
+  artista: { src: 'assets/tarja-artista.png', x: 110, y: 190, scale: 1.0 },
+  empresa: { src: 'assets/tarja-empresa.png', x: 110, y: 190, scale: 1.0 }
 };
 
 const CHAR_LIMITS = { titulo: { min: 5, max: 60 }, descricao: { min: 150, max: 250 } };
@@ -75,7 +78,7 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 function loadImage(src) {
-  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now(); // cache-buster
+  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now(); // cache-buster p/ ver mudanças
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -110,80 +113,46 @@ function initCanvas() {
   // uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
-  if (logoInput) {
-    logoInput.addEventListener('change', (e) => {
-      const r = new FileReader();
-      r.onload = (ev) => { logoImg = new Image(); logoImg.onload = gerarPost; logoImg.src = ev.target.result; };
-      r.readAsDataURL(e.target.files[0]);
-    });
-  }
-  if (lateralInput) {
-    lateralInput.addEventListener('change', (e) => {
-      const r = new FileReader();
-      r.onload = (ev) => { lateralImg = new Image(); lateralImg.onload = gerarPost; lateralImg.src = ev.target.result; };
-      r.readAsDataURL(e.target.files[0]);
-    });
-  }
+  logoInput?.addEventListener('change', (e) => {
+    const r = new FileReader();
+    r.onload = (ev) => { logoImg = new Image(); logoImg.onload = gerarPost; logoImg.src = ev.target.result; };
+    r.readAsDataURL(e.target.files[0]);
+  });
+  lateralInput?.addEventListener('change', (e) => {
+    const r = new FileReader();
+    r.onload = (ev) => { lateralImg = new Image(); lateralImg.onload = gerarPost; lateralImg.src = ev.target.result; };
+    r.readAsDataURL(e.target.files[0]);
+  });
 
   // sliders imagem de apoio + textos
   ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', gerarPost);
+    document.getElementById(id)?.addEventListener('input', gerarPost);
   });
 
   bindCategoriaRadios();
   document.fonts?.ready?.then(gerarPost);
 }
 
-/* ---- radios + tarja ---- */
+/* ---- radios + tarja (sem sliders) ---- */
 function bindCategoriaRadios() {
-  // remove quaisquer duplicatas de controles de tarja, se existirem
-  dedupeTarjaControls();
-
   const radios = document.querySelectorAll('input[name="categoria"]');
-  const tarjaControls = document.getElementById('tarjaControls');
-
   radios.forEach((radio) => {
-    radio.addEventListener('change', () => selectCategoria(radio.value, tarjaControls));
+    radio.addEventListener('change', () => selectCategoria(radio.value));
   });
 
   // se já vier pré-selecionado
   const pre = document.querySelector('input[name="categoria"]:checked');
-  if (pre) selectCategoria(pre.value, tarjaControls);
+  if (pre) selectCategoria(pre.value);
 }
-function dedupeTarjaControls() {
-  // se por acaso existirem inputs duplicados com o mesmo id, remove os extras
-  ['tarjaScale','tarjaX','tarjaY'].forEach((id)=>{
-    const nodes = document.querySelectorAll('input#'+id);
-    if (nodes.length > 1) {
-      nodes.forEach((n, i)=>{ if (i>0) n.parentElement?.removeChild(n); });
-    }
-  });
-}
-async function selectCategoria(value, tarjaControls) {
+async function selectCategoria(value) {
   categoriaSelecionada = value;
-  tarjaCfg = { ...TARJAS[value] };
+  tarjaCfg = { ...TARJAS[value] };       // valores fixos definidos no código
   try {
     tarjaImg = await loadImage(tarjaCfg.src);
   } catch (e) {
     console.error('Não foi possível carregar a tarja:', e);
-    tarjaImg = null; // cai no fallback (retângulo) no gerarPost
+    tarjaImg = null; // cai no fallback visual
   }
-
-  // sincroniza sliders + mostra controles
-  if (tarjaControls) tarjaControls.style.display = 'block';
-  const s = document.getElementById('tarjaScale');
-  const x = document.getElementById('tarjaX');
-  const y = document.getElementById('tarjaY');
-  if (s) s.value = tarjaCfg.scale;
-  if (x) x.value = tarjaCfg.x;
-  if (y) y.value = tarjaCfg.y;
-
-  // listeners dos sliders (uma única vez está ok; IDs são únicos após dedupe)
-  s?.addEventListener('input', ()=>{ if (tarjaCfg){ tarjaCfg.scale = parseFloat(s.value); gerarPost(); }});
-  x?.addEventListener('input', ()=>{ if (tarjaCfg){ tarjaCfg.x = parseInt(x.value,10); gerarPost(); }});
-  y?.addEventListener('input', ()=>{ if (tarjaCfg){ tarjaCfg.y = parseInt(y.value,10); gerarPost(); }});
-
   gerarPost();
   revalidateStepNav();
 }
@@ -213,14 +182,14 @@ function gerarPost() {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  // tarja (sobre o frame)
+  // tarja (sobre o frame) — usa APENAS tarjaCfg (sem sliders)
   if (tarjaCfg) {
     if (tarjaImg) {
       const w = tarjaImg.naturalWidth * tarjaCfg.scale;
       const h = tarjaImg.naturalHeight * tarjaCfg.scale;
       ctx.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
     } else {
-      // fallback visível para debug (aparece se a imagem não carregou)
+      // fallback para debug visual
       ctx.fillStyle = '#ffd400';
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 10;
@@ -323,7 +292,7 @@ async function enviarParaGoogle() {
     if (!f) return null;
     const b64 = await toBase64(f);
     return { name: f.name, type: f.type, content: b64.split(',')[1] };
-    }
+  }
 
   const logoBase64 = await processarImagem('logo');
   const lateralBase64 = await processarImagem('lateral');
@@ -415,7 +384,7 @@ const REQUIRED_BY_STEP = {
   2: ['nome','email','telefone'],
   3: ['empresa','site','insta'],
   4: ['logo','lateral'],
-  5: ['titulo','descricao'], // categoria validada no STEP_VALIDATORS
+  5: ['titulo','descricao'], // categoria validada abaixo
   6: []
 };
 const GLOBAL_VALIDATORS = [];
@@ -592,5 +561,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
-
-
