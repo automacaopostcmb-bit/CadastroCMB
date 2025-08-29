@@ -20,10 +20,10 @@ const FINAL_CANVAS = { w: 1080, h: 1350 };
    width,height -> tamanho desse recorte dentro do poster final
 */
 const PREVIEW_CROP_IN_FINAL = {
-  x: 32,      // << ajuste fino
-  y: 210,     // << ajuste fino
-  width: 1016, // << ajuste fino
-  height: 770  // << ajuste fino
+  x: 30,          // deslocamento lateral no poster final
+  y: 225,         // distância do topo do poster final
+  width: 1020,    // largura proporcional do recorte no poster final
+  height: 770     // altura proporcional do recorte no poster final
 };
 
 /* TARJAS (fixas no final) */
@@ -741,3 +741,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
