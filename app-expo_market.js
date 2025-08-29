@@ -6,12 +6,12 @@ const FRAME_URL =
 const FRAME_URL_PREVIEW =
   'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_prepreview_expo_market.png';
 
-const FINAL = { w: 1080, h: 1350 };   // etapa 5 (padrão do post)
-const PREVIEW = { w: 771,  h: 1173 };  // etapa 4 (confirmado)
+const FINAL   = { w: 1080, h: 1350 };   // etapa 5 (padrão do post)
+const PREVIEW = { w: 771,  h: 1173 };   // etapa 4 (confirmado)
 
-/* 🔴 RECORTE DO PRÉ-PREVIEW DENTRO DO POSTER FINAL
-   Proporção idêntica ao preview: 771x1173.
-   Ajuste fino x/y se quiser (2–5px).
+/* 🔴 RETÂNGULO DO PRÉ-PREVIEW DENTRO DO PÔSTER FINAL
+   Estes números foram os que deixaram o posicionamento correto p/ você.
+   Se precisar, ajuste finamente x/y (±2~5 px).
 */
 const CROP_FINAL = { x: 66, y: 170, width: 771, height: 1173 };
 
@@ -79,14 +79,10 @@ function updateStep5Warning(){
 let canvas4, ctx4, frame4;
 let canvas5, ctx5, frame5;
 
-// offscreen para renderizar o pôster final e depois recortar para a etapa 4
-const offFinal = document.createElement('canvas'); offFinal.width=FINAL.w; offFinal.height=FINAL.h;
-const offCtx = offFinal.getContext('2d');
-
 let logoImg=null, lateralImg=null;
 let tarjaImg=null, tarjaCfg=null, categoriaSelecionada=null;
 
-/* posição/escala NORMALIZADAS (relativas ao poster final) */
+/* posição/escala NORMALIZADAS (relativas ao pôster final) */
 let nX=0.30, nY=0.30, nW=0.40; // top-left + largura; altura respeita proporção
 
 /* =========================================================
@@ -98,33 +94,37 @@ document.addEventListener('DOMContentLoaded', () => {
   canvas4=document.getElementById('canvas4'); ctx4=canvas4?.getContext('2d');
   canvas5=document.getElementById('canvas5'); ctx5=canvas5?.getContext('2d');
 
-  // frames
   Promise.all([loadImage(FRAME_URL), loadImage(FRAME_URL_PREVIEW)])
     .then(([f5,f4])=>{ frame5=f5; frame4=f4; drawStep4(); drawStep5(); });
 
-  // uploads — separados (não invertem mais)
+  // uploads — separados (não invertem)
   document.getElementById('logo')?.addEventListener('change', e=>{
     const f=e.target.files[0]; if(!f) return;
-    const r=new FileReader(); r.onload=ev=>{logoImg=new Image(); logoImg.onload=()=>{savePos(); redrawAll();}; logoImg.src=ev.target.result;}; r.readAsDataURL(f);
+    const r=new FileReader();
+    r.onload=ev=>{ logoImg=new Image(); logoImg.onload=()=>{savePos(); drawStep5(); drawStep4();}; logoImg.src=ev.target.result; };
+    r.readAsDataURL(f);
   });
   document.getElementById('lateral')?.addEventListener('change', e=>{
     const f=e.target.files[0]; if(!f) return;
-    const r=new FileReader(); r.onload=ev=>{
+    const r=new FileReader();
+    r.onload=ev=>{
       localStorage.setItem('apoio_b64', ev.target.result);
-      lateralImg=new Image(); lateralImg.onload=()=>{ setSizeFromPercent(40); centerInsideCrop(); savePos(); redrawAll(); };
+      lateralImg=new Image();
+      lateralImg.onload=()=>{ setSizeFromPercent(40); centerInsideCrop(); savePos(); drawStep5(); drawStep4(); };
       lateralImg.src=ev.target.result;
-    }; r.readAsDataURL(f);
+    };
+    r.readAsDataURL(f);
   });
 
-  // sliders E4 (tudo relativo ao MIÓLO/CROP)
+  // sliders E4 (relativos ao MIÓLO/CROP)
   document.getElementById('size4')?.addEventListener('input', e=>{
-    setSizeFromPercent(parseFloat(e.target.value||'40')); clampInsideCrop(); savePos(); redrawAll();
+    setSizeFromPercent(parseFloat(e.target.value||'40')); clampInsideCrop(); savePos(); drawStep5(); drawStep4();
   });
   document.getElementById('x4')?.addEventListener('input', e=>{
-    setPosXFromPercent(parseFloat(e.target.value||'50')); clampInsideCrop(); savePos(); redrawAll();
+    setPosXFromPercent(parseFloat(e.target.value||'50')); clampInsideCrop(); savePos(); drawStep5(); drawStep4();
   });
   document.getElementById('y4')?.addEventListener('input', e=>{
-    setPosYFromPercent(parseFloat(e.target.value||'50')); clampInsideCrop(); savePos(); redrawAll();
+    setPosYFromPercent(parseFloat(e.target.value||'50')); clampInsideCrop(); savePos(); drawStep5(); drawStep4();
   });
 
   // textos (E5)
@@ -135,15 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================================
-   CONVERSÃO SLIDERS -> NORMALIZADO (POSTER FINAL)
+   CONVERSÕES (sliders -> normalizado no pôster final)
    ========================================================= */
 function setSizeFromPercent(pct){
-  // largura desejada = pct% da largura do miolo (CROP_FINAL)
-  const wFracCrop = (pct/100);                  // 0..1 da largura do CROP
-  const wFracFinal = wFracCrop * (CROP_FINAL.width / FINAL.w); // fração da largura do POSTER
+  const wFracCrop  = (pct/100);                             // 0..1 da largura do CROP
+  const wFracFinal = wFracCrop * (CROP_FINAL.width / FINAL.w);
   nW = Math.max(0.05, Math.min(wFracFinal, 1));
 }
-
 function setPosXFromPercent(pct){
   if(!lateralImg) return;
   const pxW = nW * FINAL.w;
@@ -152,7 +150,6 @@ function setPosXFromPercent(pct){
   const x = min + (pct/100) * (max - min);
   nX = x / FINAL.w;
 }
-
 function setPosYFromPercent(pct){
   if(!lateralImg) return;
   const pxW = nW * FINAL.w;
@@ -162,16 +159,14 @@ function setPosYFromPercent(pct){
   const y = min + (pct/100) * (max - min);
   nY = y / FINAL.h;
 }
-
 function centerInsideCrop(){
   if(!lateralImg) return;
   const pxW = nW * FINAL.w;
   const pxH = pxW * (lateralImg.naturalHeight / lateralImg.naturalWidth);
-  const x = CROP_FINAL.x + (CROP_FINAL.width - pxW)/2;
+  const x = CROP_FINAL.x + (CROP_FINAL.width  - pxW)/2;
   const y = CROP_FINAL.y + (CROP_FINAL.height - pxH)/2;
   nX = x / FINAL.w; nY = y / FINAL.h;
 }
-
 function clampInsideCrop(){
   if(!lateralImg) return;
   const pxW = nW * FINAL.w;
@@ -181,34 +176,70 @@ function clampInsideCrop(){
   y = Math.max(CROP_FINAL.y, Math.min(y, CROP_FINAL.y + CROP_FINAL.height - pxH));
   nX = x / FINAL.w; nY = y / FINAL.h;
 }
-
 function savePos(){
   localStorage.setItem('apoio_nX', String(nX));
   localStorage.setItem('apoio_nY', String(nY));
   localStorage.setItem('apoio_nW', String(nW));
 }
 
-function redrawAll(){ drawStep5(); drawStep4(); }
-
 /* =========================================================
    DESENHOS
    ========================================================= */
-function drawFinalTo(ctx, W, H){
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+// Etapa 4: NÃO recorta o pôster final. Desenha só o fundo do pré-preview
+// e a imagem de apoio posicionada no lugar correto via transformação.
+function drawStep4(){
+  if(!ctx4) return;
+  ctx4.clearRect(0,0,PREVIEW.w,PREVIEW.h);
+  ctx4.fillStyle='#fff'; ctx4.fillRect(0,0,PREVIEW.w,PREVIEW.h);
+
+  // desenha a imagem de apoio convertendo do espaço FINAL -> espaço PREVIEW
+  if(lateralImg){
+    const scaleX = PREVIEW.w / CROP_FINAL.width;
+    const scaleY = PREVIEW.h / CROP_FINAL.height;
+
+    const pxW_final = nW * FINAL.w;
+    const pxH_final = pxW_final * (lateralImg.naturalHeight / lateralImg.naturalWidth);
+    const x_final   = nX * FINAL.w;
+    const y_final   = nY * FINAL.h;
+
+    const x4 = (x_final - CROP_FINAL.x) * scaleX;
+    const y4 = (y_final - CROP_FINAL.y) * scaleY;
+    const w4 = pxW_final * scaleX;
+    const h4 = pxH_final * scaleY;
+
+    ctx4.drawImage(lateralImg, x4, y4, w4, h4);
+  }
+
+  // sobrepõe a moldura do pré-preview (sem logo/tarja/rodapé)
+  if(frame4?.complete && frame4.naturalWidth){
+    ctx4.drawImage(frame4, 0, 0, PREVIEW.w, PREVIEW.h);
+  }
+}
+
+// Etapa 5: pôster final completo (sem crop)
+function drawStep5(){
+  if(!ctx5) return;
+
+  nX = parseFloat(localStorage.getItem('apoio_nX') || `${nX}`) || nX;
+  nY = parseFloat(localStorage.getItem('apoio_nY') || `${nY}`) || nY;
+  nW = parseFloat(localStorage.getItem('apoio_nW') || `${nW}`) || nW;
+
+  // fundo
+  ctx5.clearRect(0,0,FINAL.w,FINAL.h);
+  ctx5.fillStyle='#fff'; ctx5.fillRect(0,0,FINAL.w,FINAL.h);
 
   // imagem de apoio
   if(lateralImg){
-    const w = nW * W;
+    const w = nW * FINAL.w;
     const h = w * (lateralImg.naturalHeight / lateralImg.naturalWidth);
-    const x = nX * W;
-    const y = nY * H;
-    ctx.drawImage(lateralImg, x, y, w, h);
+    const x = nX * FINAL.w;
+    const y = nY * FINAL.h;
+    ctx5.drawImage(lateralImg, x, y, w, h);
   }
 
   // frame final
   if (frame5?.complete && frame5.naturalWidth){
-    ctx.drawImage(frame5, 0, 0, W, H);
+    ctx5.drawImage(frame5, 0, 0, FINAL.w, FINAL.h);
   }
 
   // tarja
@@ -216,53 +247,22 @@ function drawFinalTo(ctx, W, H){
     if (tarjaImg){
       const w = tarjaImg.naturalWidth * tarjaCfg.scale;
       const h = tarjaImg.naturalHeight * tarjaCfg.scale;
-      ctx.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
+      ctx5.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
     } else {
-      ctx.fillStyle='#ffd400'; ctx.strokeStyle='#000'; ctx.lineWidth=10;
-      ctx.fillRect(tarjaCfg.x, tarjaCfg.y, 460*tarjaCfg.scale, 92*tarjaCfg.scale);
-      ctx.strokeRect(tarjaCfg.x, tarjaCfg.y, 460*tarjaCfg.scale, 92*tarjaCfg.scale);
+      ctx5.fillStyle='#ffd400'; ctx5.strokeStyle='#000'; ctx5.lineWidth=10;
+      ctx5.fillRect(tarjaCfg.x, tarjaCfg.y, 460*tarjaCfg.scale, 92*tarjaCfg.scale);
+      ctx5.strokeRect(tarjaCfg.x, tarjaCfg.y, 460*tarjaCfg.scale, 92*tarjaCfg.scale);
     }
   }
 
-  // logo (centro superior)
+  // logo
   if (logoImg){
     const maxW=500, maxH=350;
     const s=Math.min(maxW/logoImg.width, maxH/logoImg.height);
     const w=logoImg.width*s, h=logoImg.height*s;
     const centerY=450;
-    ctx.drawImage(logoImg, (W-w)/2, centerY - h/2, w, h);
+    ctx5.drawImage(logoImg, (FINAL.w - w)/2, centerY - h/2, w, h);
   }
-}
-
-function drawStep4(){
-  if(!ctx4) return;
-
-  // 1) renderiza o pôster final num offscreen 1080x1350
-  drawFinalTo(offCtx, FINAL.w, FINAL.h);
-
-  // 2) recorta o miolo (CROP_FINAL) e escala/posiciona no canvas4 771x1173
-  ctx4.clearRect(0,0,PREVIEW.w,PREVIEW.h);
-  ctx4.drawImage(
-    offFinal,
-    CROP_FINAL.x, CROP_FINAL.y, CROP_FINAL.width, CROP_FINAL.height,
-    0, 0, PREVIEW.w, PREVIEW.h
-  );
-
-  // 3) sobrepõe a moldura do pré-preview
-  if(frame4?.complete && frame4.naturalWidth){
-    ctx4.drawImage(frame4, 0, 0, PREVIEW.w, PREVIEW.h);
-  }
-}
-
-function drawStep5(){
-  if(!ctx5) return;
-
-  // lê normalizados (se recarregar a página)
-  nX = parseFloat(localStorage.getItem('apoio_nX') || `${nX}`) || nX;
-  nY = parseFloat(localStorage.getItem('apoio_nY') || `${nY}`) || nY;
-  nW = parseFloat(localStorage.getItem('apoio_nW') || `${nW}`) || nW;
-
-  drawFinalTo(ctx5, FINAL.w, FINAL.h);
 
   // textos
   const titulo=(document.getElementById('titulo')?.value||'').trim();
@@ -295,7 +295,7 @@ function bindCategoriaRadios(){
 async function selectCategoria(value){
   categoriaSelecionada=value; tarjaCfg={...TARJAS[value]};
   try{ tarjaImg=await loadImage(tarjaCfg.src); }catch(e){ tarjaImg=null; }
-  drawStep4(); drawStep5(); revalidateStepNav();
+  drawStep5(); drawStep4(); revalidateStepNav();
 }
 
 /* =========================================================
@@ -457,8 +457,6 @@ function goToMenu(){
   window.location.href = base + 'index.html?back=1';
 }
 
-/* =========================================================
-   EXPORTS GLOBAIS QUE O HTML USA
-   ========================================================= */
+/* Exports globais usados no HTML */
 window.enviarParaGoogle = enviarParaGoogle;
 window.goToMenu = goToMenu;
