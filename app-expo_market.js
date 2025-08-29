@@ -1,27 +1,29 @@
 /* =========================================================
-   CONFIGURAÇÃO (edite aqui limites, campos de revisão, etc.)
+   CONFIGURAÇÃO
    ========================================================= */
-const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
+const FRAME_URL =
+  'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
 
-const CHAR_LIMITS = {
-  titulo:    { min: 5,  max: 60  },  // Etapa 5
-  descricao: { min: 150, max: 250 }
+/* ===== TARJAS (AJUSTE AQUI) ===== */
+const TARJAS = {
+  artista: { src: 'assets/tarja-artista.png', x: 110, y: 190, scale: 1.0 },
+  empresa: { src: 'assets/tarja-empresa.png', x: 110, y: 190, scale: 1.0 }
 };
-const PHONE_ALLOWED_LENGTHS = [10, 11]; // DDD + número
-const EMAIL_REGEX  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const INSTA_REGEX  = /^@?[a-zA-Z0-9._]{1,30}$/;
 
-// Campos exibidos na revisão (etapa 7)
+const CHAR_LIMITS = { titulo: { min: 5, max: 60 }, descricao: { min: 150, max: 250 } };
+const PHONE_ALLOWED_LENGTHS = [10, 11];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+const INSTA_REGEX = /^@?[a-zA-Z0-9._]{1,30}$/;
+
 const REVIEW_FIELDS = [
-  { id: 'nome',           label: 'Nome' },
-  { id: 'email',          label: 'E-mail' },
-  { id: 'telefone',       label: 'Telefone' },
-  { id: 'empresa',        label: 'Empresa' },
-  { id: 'site',           label: 'Site',    format: v => normalizeUrlMaybe(v) },
-  { id: 'insta',          label: 'Instagram' },
+  { id: 'nome', label: 'Nome' },
+  { id: 'email', label: 'E-mail' },
+  { id: 'telefone', label: 'Telefone' },
+  { id: 'empresa', label: 'Empresa' },
+  { id: 'site', label: 'Site', format: (v) => normalizeUrlMaybe(v) },
+  { id: 'insta', label: 'Instagram' }
 ];
 
-/* Mensagens/flags etapa 5 */
 const step5Messages = { charError: '' };
 const validationFlags = { overflow: false };
 
@@ -35,10 +37,10 @@ function showFieldError(inputId, msg) {
   if (input) input.classList.toggle('invalid', !!msg);
 }
 function formatPhone(digits) {
-  if (digits.length <= 2)  return '(' + digits;
-  if (digits.length <= 6)  return `(${digits.slice(0,2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7,11)}`;
+  if (digits.length <= 2) return '(' + digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 }
 function normalizeUrlMaybe(url) {
   let u = (url || '').trim();
@@ -58,84 +60,143 @@ function updateStep5Warning() {
 function buildCaptionFromForm() {
   const empresa = (document.getElementById('empresa')?.value || '').trim();
   let insta = (document.getElementById('insta')?.value || '').trim();
-  if (insta) { insta = '@' + insta.replace(/^@+/, ''); }
-
+  if (insta) insta = '@' + insta.replace(/^@+/, '');
   const descLonga = (document.getElementById('descricaolonga')?.value || '').trim();
   const descCurta = (document.getElementById('descricao')?.value || '').trim();
   const descricao = descLonga || descCurta || '';
-
   const head = `Expositor confirmado! ${empresa || '—'} ${insta || ''} no CMB @comicmarketbrasil`;
-  const tags = '#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom';
-
+  const tags =
+    '#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom';
   return [head, '', descricao, '', tags].join('\n');
 }
 function escapeHtml(s) {
   return String(s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+function loadImage(src) {
+  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now(); // cache-buster
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src + bust;
+  });
 }
 
 /* ===========================
    VARS DO CANVAS / PREVIEW
    =========================== */
 let canvas, ctx, frameImg, logoImg, lateralImg;
+let tarjaImg = null, tarjaCfg = null, categoriaSelecionada = null;
 
 /* ===========================
-   PREVIEW / CANVAS
+   CANVAS
    =========================== */
 function initCanvas() {
   canvas = document.getElementById('canvas');
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
+  // frame
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
   frameImg.onload = gerarPost;
-  frameImg.onerror = () => {
-    const m = document.getElementById('mensagem');
-    if (m) {
-      m.style.display = 'block';
-      m.style.color = 'red';
-      m.textContent = '❌ Não consegui carregar a moldura.';
-    }
-    console.error('Falha ao carregar frame:', FRAME_URL);
-  };
+  frameImg.onerror = () => console.error('Falha ao carregar frame:', FRAME_URL);
   frameImg.src = FRAME_URL + '?v=' + Date.now();
 
+  // uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
-
   if (logoInput) {
     logoInput.addEventListener('change', (e) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => { logoImg = new Image(); logoImg.onload = gerarPost; logoImg.src = ev.target.result; };
-      reader.readAsDataURL(e.target.files[0]);
+      const r = new FileReader();
+      r.onload = (ev) => { logoImg = new Image(); logoImg.onload = gerarPost; logoImg.src = ev.target.result; };
+      r.readAsDataURL(e.target.files[0]);
     });
   }
   if (lateralInput) {
     lateralInput.addEventListener('change', (e) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => { lateralImg = new Image(); lateralImg.onload = gerarPost; lateralImg.src = ev.target.result; };
-      reader.readAsDataURL(e.target.files[0]);
+      const r = new FileReader();
+      r.onload = (ev) => { lateralImg = new Image(); lateralImg.onload = gerarPost; lateralImg.src = ev.target.result; };
+      r.readAsDataURL(e.target.files[0]);
     });
   }
 
-  ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach(id => {
+  // sliders imagem de apoio + textos
+  ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', gerarPost);
   });
 
+  bindCategoriaRadios();
   document.fonts?.ready?.then(gerarPost);
 }
 
+/* ---- radios + tarja ---- */
+function bindCategoriaRadios() {
+  // remove quaisquer duplicatas de controles de tarja, se existirem
+  dedupeTarjaControls();
+
+  const radios = document.querySelectorAll('input[name="categoria"]');
+  const tarjaControls = document.getElementById('tarjaControls');
+
+  radios.forEach((radio) => {
+    radio.addEventListener('change', () => selectCategoria(radio.value, tarjaControls));
+  });
+
+  // se já vier pré-selecionado
+  const pre = document.querySelector('input[name="categoria"]:checked');
+  if (pre) selectCategoria(pre.value, tarjaControls);
+}
+function dedupeTarjaControls() {
+  // se por acaso existirem inputs duplicados com o mesmo id, remove os extras
+  ['tarjaScale','tarjaX','tarjaY'].forEach((id)=>{
+    const nodes = document.querySelectorAll('input#'+id);
+    if (nodes.length > 1) {
+      nodes.forEach((n, i)=>{ if (i>0) n.parentElement?.removeChild(n); });
+    }
+  });
+}
+async function selectCategoria(value, tarjaControls) {
+  categoriaSelecionada = value;
+  tarjaCfg = { ...TARJAS[value] };
+  try {
+    tarjaImg = await loadImage(tarjaCfg.src);
+  } catch (e) {
+    console.error('Não foi possível carregar a tarja:', e);
+    tarjaImg = null; // cai no fallback (retângulo) no gerarPost
+  }
+
+  // sincroniza sliders + mostra controles
+  if (tarjaControls) tarjaControls.style.display = 'block';
+  const s = document.getElementById('tarjaScale');
+  const x = document.getElementById('tarjaX');
+  const y = document.getElementById('tarjaY');
+  if (s) s.value = tarjaCfg.scale;
+  if (x) x.value = tarjaCfg.x;
+  if (y) y.value = tarjaCfg.y;
+
+  // listeners dos sliders (uma única vez está ok; IDs são únicos após dedupe)
+  s?.addEventListener('input', ()=>{ if (tarjaCfg){ tarjaCfg.scale = parseFloat(s.value); gerarPost(); }});
+  x?.addEventListener('input', ()=>{ if (tarjaCfg){ tarjaCfg.x = parseInt(x.value,10); gerarPost(); }});
+  y?.addEventListener('input', ()=>{ if (tarjaCfg){ tarjaCfg.y = parseInt(y.value,10); gerarPost(); }});
+
+  gerarPost();
+  revalidateStepNav();
+}
+
+/* ---- desenho ---- */
 function gerarPost() {
   if (!ctx) return;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // imagem de apoio
   if (lateralImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = 150, anchorPointY = 1000;
@@ -147,18 +208,37 @@ function gerarPost() {
     ctx.drawImage(lateralImg, drawX, drawY, w, h);
   }
 
+  // frame
   if (frameImg?.complete && frameImg.naturalWidth) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  if (logoImg) {
-    const maxWidth = 500, maxHeight = 350;
-    const scale = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
-    const width = logoImg.width * scale, height = logoImg.height * scale;
-    const centerY = 450;
-    ctx.drawImage(logoImg, (canvas.width - width) / 2, centerY - height / 2, width, height);
+  // tarja (sobre o frame)
+  if (tarjaCfg) {
+    if (tarjaImg) {
+      const w = tarjaImg.naturalWidth * tarjaCfg.scale;
+      const h = tarjaImg.naturalHeight * tarjaCfg.scale;
+      ctx.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
+    } else {
+      // fallback visível para debug (aparece se a imagem não carregou)
+      ctx.fillStyle = '#ffd400';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 10;
+      ctx.fillRect(tarjaCfg.x, tarjaCfg.y, 460 * tarjaCfg.scale, 92 * tarjaCfg.scale);
+      ctx.strokeRect(tarjaCfg.x, tarjaCfg.y, 460 * tarjaCfg.scale, 92 * tarjaCfg.scale);
+    }
   }
 
+  // logo
+  if (logoImg) {
+    const maxWidth = 500, maxHeight = 350;
+    const s = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
+    const w = logoImg.width * s, h = logoImg.height * s;
+    const centerY = 450;
+    ctx.drawImage(logoImg, (canvas.width - w) / 2, centerY - h / 2, w, h);
+  }
+
+  // título
   const titulo = (document.getElementById('titulo').value || '').trim();
   ctx.font = 'bold 48px "Comic Relief"';
   ctx.fillStyle = '#FFFFFF';
@@ -166,22 +246,21 @@ function gerarPost() {
 
   const tituloX = 400, tituloYBase = 880;
   const tituloMaxWidth = 600, tituloMaxLinhas = 2;
-
   const linhasTitulo = wrapText(titulo, tituloMaxWidth, ctx);
   const ultrapassouTitulo = linhasTitulo.length > tituloMaxLinhas;
   const linhasTituloSlice = linhasTitulo.slice(0, tituloMaxLinhas);
   let offsetY = (linhasTituloSlice.length === 1) ? 30 : 0;
   linhasTituloSlice.forEach((linha, i) => ctx.fillText(linha, tituloX, tituloYBase + i * 54 + offsetY));
 
+  // descrição
   const descricao = (document.getElementById('descricao').value || '').trim();
   ctx.font = '28px "Comic Relief"';
-  ctx.fillStyle = '#333333';
+  ctx.fillStyle = '#333';
   const descricaoX = 400, descricaoY = 1050;
   const descricaoMaxWidth = 600, descricaoMaxLinhas = 5;
-
   const linhasManuais = descricao.split('\n');
   let todas = [];
-  linhasManuais.forEach(l => todas.push(...wrapText(l, descricaoMaxWidth, ctx)));
+  linhasManuais.forEach((l) => todas.push(...wrapText(l, descricaoMaxWidth, ctx)));
   const ultrapassouDescricao = todas.length > descricaoMaxLinhas;
   const linhasDescricao = todas.slice(0, descricaoMaxLinhas);
   linhasDescricao.forEach((linha, i) => ctx.fillText(linha, descricaoX, descricaoY + i * 40));
@@ -190,16 +269,17 @@ function gerarPost() {
   updateStep5Warning();
   if (typeof revalidateStepNav === 'function') revalidateStepNav();
 }
+
 function wrapText(text, maxWidth, context) {
   const palavras = text.split(' ');
   const linhas = [];
   let linha = '';
-  palavras.forEach(palavra => {
-    const teste = linha + palavra + ' ';
+  palavras.forEach((p) => {
+    const teste = linha + p + ' ';
     const largura = context.measureText(teste).width;
     if (largura > maxWidth && linha !== '') {
       linhas.push(linha.trim());
-      linha = palavra + ' ';
+      linha = p + ' ';
     } else {
       linha = teste;
     }
@@ -207,6 +287,7 @@ function wrapText(text, maxWidth, context) {
   if (linha !== '') linhas.push(linha.trim());
   return linhas;
 }
+
 function baixarImagem() {
   const link = document.createElement('a');
   link.download = 'post.png';
@@ -215,24 +296,17 @@ function baixarImagem() {
 }
 
 /* ===========================
-   ENVIO (Google Apps Script)
+   ENVIO (Apps Script)
    =========================== */
 async function enviarParaGoogle() {
-  const camposObrigatorios = [
-    'nome','email','telefone',
-    'empresa','site','insta',
-    'logo','lateral',
-    'titulo','descricao'
-  ];
-  let camposVazios = [];
-  camposObrigatorios.forEach(id => {
+  const obrig = ['nome','email','telefone','empresa','site','insta','logo','lateral','titulo','descricao'];
+  let faltando = [];
+  obrig.forEach((id) => {
     const el = document.getElementById(id);
-    const valor = (el && el.type !== 'file')
-      ? (el.value || '').trim()
-      : (el && el.files && el.files.length ? 'ok' : '');
-    if (!valor) camposVazios.push(id);
+    const v = (el && el.type !== 'file') ? (el.value || '').trim() : (el && el.files && el.files.length ? 'ok' : '');
+    if (!v) faltando.push(id);
   });
-  if (camposVazios.length > 0) {
+  if (faltando.length) {
     const msg = document.getElementById('mensagem');
     msg.textContent = '❌ Preencha todos os campos obrigatórios.';
     msg.style.color = 'red';
@@ -240,18 +314,16 @@ async function enviarParaGoogle() {
     return;
   }
 
-  const toBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
+  const toBase64 = (file) => new Promise((res, rej) => {
+    const r = new FileReader(); r.readAsDataURL(file);
+    r.onload = () => res(r.result); r.onerror = rej;
   });
-  async function processarImagem(inputId) {
-    const file = document.getElementById(inputId).files[0];
-    if (!file) return null;
-    const base64 = await toBase64(file);
-    return { name: file.name, type: file.type, content: base64.split(',')[1] };
-  }
+  async function processarImagem(id) {
+    const f = document.getElementById(id).files[0];
+    if (!f) return null;
+    const b64 = await toBase64(f);
+    return { name: f.name, type: f.type, content: b64.split(',')[1] };
+    }
 
   const logoBase64 = await processarImagem('logo');
   const lateralBase64 = await processarImagem('lateral');
@@ -259,13 +331,11 @@ async function enviarParaGoogle() {
 
   let previewBase64 = null;
   if (canvas) {
-    const previewDataURL = canvas.toDataURL('image/png');
-    previewBase64 = { name: 'preview.png', type: 'image/png', content: previewDataURL.split(',')[1] };
+    const dataURL = canvas.toDataURL('image/png');
+    previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
-  // 👇 NOVO: legenda invisível enviada junto
   const legenda = buildCaptionFromForm();
-
   const dados = {
     nome: document.getElementById('nome').value,
     email: document.getElementById('email').value,
@@ -276,22 +346,22 @@ async function enviarParaGoogle() {
     titulo: document.getElementById('titulo').value,
     descricao: document.getElementById('descricao').value,
     descricaolonga: document.getElementById('descricaolonga').value,
-    legenda, // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    legenda,
     logo: logoBase64,
     lateral: lateralBase64,
     background: backgroundBase64,
-    preview: previewBase64
+    preview: previewBase64,
+    categoria: categoriaSelecionada || ''
   };
 
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'flex';
 
   try {
-    const response = await fetch("https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec", {
-      method: "POST",
-      body: JSON.stringify(dados)
-    });
-
+    const response = await fetch(
+      'https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec',
+      { method: 'POST', body: JSON.stringify(dados) }
+    );
     const result = await response.json();
     const msg = document.getElementById('mensagem');
     msg.style.display = 'block';
@@ -299,7 +369,6 @@ async function enviarParaGoogle() {
     if (result.status === 'success') {
       msg.textContent = '✅ Enviado com sucesso!';
       msg.style.color = 'green';
-
       document.getElementById('step7').style.display = 'none';
       document.getElementById('wizard-indicator').style.display = 'none';
       document.getElementById('link-topo').style.display = 'none';
@@ -325,23 +394,17 @@ async function enviarParaGoogle() {
 }
 
 /* ===========================
-   AUTENTICAÇÃO (Apps Script)
+   AUTENTICAÇÃO
    =========================== */
-const API_URL = "https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec";
-const PAGINA  = "expo_market";
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec';
+const PAGINA = 'expo_market';
 async function checkAuth() {
-  const chave = (localStorage.getItem("chave") || "").trim();
-  if (!chave) {
-    alert("Faça login primeiro.");
-    window.location.href = "index.html";
-    return;
-  }
+  const chave = (localStorage.getItem('chave') || '').trim();
+  if (!chave) { alert('Faça login primeiro.'); window.location.href = 'index.html'; return; }
   const resp = await fetch(`${API_URL}?chave=${encodeURIComponent(chave)}&pagina=${encodeURIComponent(PAGINA)}`);
   const data = await resp.json();
-  if (!data.permitido) {
-    alert("Você não tem permissão para acessar esta página.");
-    window.location.href = "index.html";
-  }
+  if (!data.permitido) { alert('Você não tem permissão para acessar esta página.'); window.location.href = 'index.html'; }
 }
 
 /* ===========================
@@ -352,7 +415,7 @@ const REQUIRED_BY_STEP = {
   2: ['nome','email','telefone'],
   3: ['empresa','site','insta'],
   4: ['logo','lateral'],
-  5: ['titulo','descricao'],
+  5: ['titulo','descricao'], // categoria validada no STEP_VALIDATORS
   6: []
 };
 const GLOBAL_VALIDATORS = [];
@@ -360,33 +423,33 @@ const GLOBAL_VALIDATORS = [];
 const STEP_VALIDATORS = {
   2: () => {
     const email = (document.getElementById('email').value || '').trim();
-    const emailOK = EMAIL_REGEX.test(email);
-    showFieldError('email', emailOK ? '' : 'Informe um e-mail válido.');
+    const okEmail = EMAIL_REGEX.test(email);
+    showFieldError('email', okEmail ? '' : 'Informe um e-mail válido.');
 
     const raw = (document.getElementById('telefone').value || '').replace(/\D/g, '');
-    const telOK = PHONE_ALLOWED_LENGTHS.includes(raw.length);
-    showFieldError('telefone', telOK ? '' : 'Telefone com DDD (10 ou 11 dígitos).');
+    const okTel = PHONE_ALLOWED_LENGTHS.includes(raw.length);
+    showFieldError('telefone', okTel ? '' : 'Telefone com DDD (10 ou 11 dígitos).');
 
-    return emailOK && telOK;
+    return okEmail && okTel;
   },
   3: () => {
     const siteInput = document.getElementById('site');
     let url = normalizeUrlMaybe(siteInput.value);
-    let siteOK = false;
+    let okSite = false;
     try {
       const u = new URL(url);
-      siteOK = !!u.hostname && u.hostname.includes('.');
-      if (siteOK) siteInput.value = url;
-    } catch(e) { siteOK = false; }
-    showFieldError('site', siteOK ? '' : 'Digite um site válido. Ex.: https://suaempresa.com');
+      okSite = !!u.hostname && u.hostname.includes('.');
+      if (okSite) siteInput.value = url;
+    } catch { okSite = false; }
+    showFieldError('site', okSite ? '' : 'Digite um site válido. Ex.: https://suaempresa.com');
 
     const instaInput = document.getElementById('insta');
     let ig = (instaInput.value || '').trim();
-    const instaOK = INSTA_REGEX.test(ig);
-    showFieldError('insta', instaOK ? '' : 'Use apenas letras, números, ponto e underline.');
-    if (instaOK) { ig = ig.replace(/^@?/, '@'); instaInput.value = ig.toLowerCase(); }
+    const okInsta = INSTA_REGEX.test(ig);
+    showFieldError('insta', okInsta ? '' : 'Use apenas letras, números, ponto e underline.');
+    if (okInsta) { ig = ig.replace(/^@?/, '@'); instaInput.value = ig.toLowerCase(); }
 
-    return siteOK && instaOK;
+    return okSite && okInsta;
   },
   5: () => {
     const t = (document.getElementById('titulo').value || '').trim();
@@ -402,6 +465,11 @@ const STEP_VALIDATORS = {
       ok = false;
     }
 
+    const selected = document.querySelector('input[name="categoria"]:checked');
+    const catErr = document.getElementById('categoriaError');
+    if (!selected) { ok = false; catErr && (catErr.textContent = 'Selecione uma categoria para continuar.'); }
+    else { catErr && (catErr.textContent = ''); }
+
     updateStep5Warning();
     if (validationFlags.overflow) ok = false;
     return ok;
@@ -416,7 +484,7 @@ function isFilled(id) {
   return (el.value || '').trim().length > 0;
 }
 function markValidity(ids = []) {
-  ids.forEach(id => {
+  ids.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.classList.remove('invalid');
@@ -453,9 +521,7 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-  if (currentStep === 7) {
-    try { buildReview(); } catch (e) { console.error('buildReview error', e); }
-  }
+  if (currentStep === 7) { try { buildReview(); } catch (e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -467,11 +533,8 @@ function buildReview() {
     const el = document.getElementById(id);
     let val = '';
     if (el) {
-      if (el.type === 'file') {
-        val = (el.files && el.files[0]) ? el.files[0].name : '—';
-      } else {
-        val = (el.value || '').trim();
-      }
+      if (el.type === 'file') val = (el.files && el.files[0]) ? el.files[0].name : '—';
+      else val = (el.value || '').trim();
     }
     if (typeof format === 'function') val = format(val);
     if (!val) val = '—';
@@ -486,7 +549,7 @@ function buildReview() {
 }
 
 /* ===========================
-   MENU: voltar para index.html?back=1
+   MENU
    =========================== */
 function goToMenu() {
   const base = location.href.replace(/[^/]+$/, '');
@@ -501,12 +564,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!isWizardPage) return;
 
   const telEl = document.getElementById('telefone');
-  if (telEl) {
-    telEl.addEventListener('input', (e) => {
-      const onlyDigits = e.target.value.replace(/\D/g, '').slice(0, 11);
-      e.target.value = formatPhone(onlyDigits);
-    });
-  }
+  telEl?.addEventListener('input', (e) => {
+    const only = e.target.value.replace(/\D/g, '').slice(0, 11);
+    e.target.value = formatPhone(only);
+  });
 
   initCanvas();
   checkAuth();
@@ -525,9 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
     revalidateStepNav();
   });
   document.addEventListener('click', (e) => {
-    if (e.target.matches('[data-next]')) {
-      if (validateStep(currentStep)) showStep(currentStep + 1);
-    }
+    if (e.target.matches('[data-next]')) { if (validateStep(currentStep)) showStep(currentStep + 1); }
     if (e.target.matches('[data-prev]')) showStep(currentStep - 1);
   });
 
