@@ -4,6 +4,29 @@
 const FRAME_URL =
   'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
 
+// Frame alternativo usado SOMENTE na etapa 4 (pré-preview com outra proporção)
+const FRAME_URL_PREVIEW =
+  'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_prepreview_expo_market.png';
+
+// Tamanho do layout final (Etapa 5)
+const CANVAS5_W = 1080;
+const CANVAS5_H = 1350;
+
+/**
+ * VIEWPORT_E4_IN_E5: retângulo, em COORDENADAS DO FINAL (E5),
+ * que representa a área correspondente ao pré-preview (E4).
+ * Ajuste esses 4 números se o pré-preview for um recorte do final.
+ *
+ * Exemplo (placeholder): full-frame (pre-preview = 100% do final).
+ * Se seu pré-preview for um pedaço específico, troque por {x,y,w,h} corretos.
+ */
+const VIEWPORT_E4_IN_E5 = {
+  x: 0,    // px na imagem final (E5)
+  y: 0,    // px na imagem final (E5)
+  w: CANVAS5_W, // largura desse "recorte" no final
+  h: CANVAS5_H  // altura desse "recorte" no final
+};
+
 /* ===== TARJAS (AJUSTE AQUI) ===== */
 const TARJAS = {
   artista: { src: 'assets/tarja-artista.png', x: 90, y: 190, scale: 0.2 },
@@ -98,14 +121,15 @@ let canvas5, ctx5;
 // Alias mantidos (para baixarImagem/enviar)
 let canvas, ctx;
 
-let frameImg, logoImg, lateralImg;
+let frameImg, frameImgPreview, logoImg, lateralImg;
 let tarjaImg = null, tarjaCfg = null, categoriaSelecionada = null;
 
-// Estado da imagem de apoio (E4, em pixels)
+// Estado da imagem de apoio (E4, em pixels do canvas4)
 let posX4 = 0, posY4 = 0, drawnW4 = 0;
 
-// Estado NORMALIZADO (usado para transportar E4->E5)
-let apoio_nX = 0.3, apoio_nY = 0.3, apoio_nW = 0.4; // defaults
+// Estado NORMALIZADO EM RELAÇÃO AO FINAL (E5) — frações da imagem final
+// (x,y e w relativos à largura/altura do canvas final 1080×1350)
+let apoio_nX = 0.3, apoio_nY = 0.3, apoio_nW = 0.4; // defaults seguros
 
 /* ===========================
    CANVAS
@@ -123,16 +147,28 @@ function initCanvas() {
   canvas = canvas5;
   ctx = ctx5;
 
-  // Frame (usado nos dois previews)
+  // Frame final (E5)
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
-  frameImg.onload = () => {
-    drawStep4();
-    gerarPost(); // desenha E5
-  };
+  frameImg.onload = () => { gerarPost(); };
   frameImg.onerror = () => console.error('Falha ao carregar frame:', FRAME_URL);
   frameImg.src = FRAME_URL + '?v=' + Date.now();
+
+  // Frame do pré-preview (E4) — pode ter outra proporção
+  frameImgPreview = new Image();
+  frameImgPreview.crossOrigin = 'anonymous';
+  frameImgPreview.referrerPolicy = 'no-referrer';
+  frameImgPreview.onload = () => {
+    // Ajusta o tamanho interno do canvas4 para casar 1:1 com o frame do preview
+    if (canvas4) {
+      canvas4.width  = frameImgPreview.naturalWidth;
+      canvas4.height = frameImgPreview.naturalHeight;
+    }
+    drawStep4();
+  };
+  frameImgPreview.onerror = () => console.error('Falha ao carregar frame preview da etapa 4:', FRAME_URL_PREVIEW);
+  frameImgPreview.src = FRAME_URL_PREVIEW + '?v=' + Date.now();
 
   // Uploads
   const logoInput = document.getElementById('logo');
@@ -154,18 +190,16 @@ function initCanvas() {
       // cria imagem
       lateralImg = new Image();
       lateralImg.onload = () => {
-        // tamanho inicial: 40% da largura do canvas4 (ou defaults se não houver canvas4)
-        const cw = canvas4 ? canvas4.width : 1080;
-        const ch = canvas4 ? canvas4.height : 1350;
-
-        apoio_nW = 0.4;
-        drawnW4 = cw * apoio_nW;
+        // tamanho inicial: 40% da largura do canvas4
+        const cw = canvas4 ? canvas4.width : VIEWPORT_E4_IN_E5.w;
+        apoio_nW = 0.4 * (VIEWPORT_E4_IN_E5.w / CANVAS5_W); // default coerente, mas será recalculado
+        drawnW4 = cw * 0.4; // largura em px no preview
         const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
 
         posX4 = (cw - drawnW4) / 2;
-        posY4 = (ch - drawnH4) / 2;
+        posY4 = (canvas4.height - drawnH4) / 2;
 
-        // salva normalizado
+        // salva normalizado (mapeando do preview para o final via viewport)
         updateNormalizedFromPixels();
 
         drawStep4();
@@ -191,7 +225,6 @@ function initCanvas() {
     const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
     posX4 = (canvas4.width - drawnW4) * (val / 100);
     posX4 = Math.max(0, Math.min(posX4, canvas4.width - drawnW4));
-    // mantém Y atual dentro do limite
     posY4 = Math.max(0, Math.min(posY4, canvas4.height - drawnH4));
     updateNormalizedFromPixels();
     drawStep4();
@@ -202,7 +235,6 @@ function initCanvas() {
     const drawnH4 = drawnW4 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
     posY4 = (canvas4.height - drawnH4) * (val / 100);
     posY4 = Math.max(0, Math.min(posY4, canvas4.height - drawnH4));
-    // mantém X atual dentro do limite
     posX4 = Math.max(0, Math.min(posX4, canvas4.width - drawnW4));
     updateNormalizedFromPixels();
     drawStep4();
@@ -225,12 +257,28 @@ function clampPosE4() {
   posY4 = Math.max(0, Math.min(posY4, canvas4.height - drawnH4));
 }
 
-/* ----- converte E4 (px) -> normalizado ----- */
+/**
+ * Converte E4 (px do preview) -> FRAÇÕES do FINAL (E5), levando em conta o viewport.
+ * - Primeiro obtemos nx_view, ny_view, nw_view (frações dentro do canvas4)
+ * - Depois mapeamos para px no final pela janela VIEWPORT_E4_IN_E5
+ * - Por fim, normalizamos por CANVAS5_W/H
+ */
 function updateNormalizedFromPixels() {
   if (!canvas4 || !lateralImg) return;
-  apoio_nX = posX4 / canvas4.width;
-  apoio_nY = posY4 / canvas4.height;
-  apoio_nW = drawnW4 / canvas4.width;
+
+  const nx_view = posX4 / canvas4.width;         // 0..1 dentro do preview
+  const ny_view = posY4 / canvas4.height;        // 0..1 dentro do preview
+  const nw_view = drawnW4 / canvas4.width;       // fração da largura do preview
+
+  const vp = VIEWPORT_E4_IN_E5;
+
+  const x_px_final = vp.x + nx_view * vp.w;
+  const y_px_final = vp.y + ny_view * vp.h;
+  const w_px_final = nw_view * vp.w;
+
+  apoio_nX = x_px_final / CANVAS5_W;
+  apoio_nY = y_px_final / CANVAS5_H;
+  apoio_nW = w_px_final / CANVAS5_W;
 
   // persiste para E5
   localStorage.setItem('apoio_nX', String(apoio_nX));
@@ -278,9 +326,9 @@ function drawStep4() {
     ctx4.drawImage(lateralImg, posX4, posY4, drawnW4, drawnH4);
   }
 
-  // frame por cima (mesmo asset, escala no canvas4)
-  if (frameImg?.complete && frameImg.naturalWidth) {
-    ctx4.drawImage(frameImg, 0, 0, canvas4.width, canvas4.height);
+  // frame do pré-preview (própria proporção)
+  if (frameImgPreview?.complete && frameImgPreview.naturalWidth) {
+    ctx4.drawImage(frameImgPreview, 0, 0, canvas4.width, canvas4.height);
   }
 }
 
@@ -291,41 +339,41 @@ function gerarPost() {
   if (!ctx5 || !canvas5) return;
 
   // lê normalizados (se tiverem sido salvos)
-  const nx = parseFloat(localStorage.getItem('apoio_nX') || `${apoio_nX}`) || 0;
-  const ny = parseFloat(localStorage.getItem('apoio_nY') || `${apoio_nY}`) || 0;
-  const nw = parseFloat(localStorage.getItem('apoio_nW') || `${apoio_nW}`) || 0.4;
+  const nx_final = parseFloat(localStorage.getItem('apoio_nX') || `${apoio_nX}`) || 0;
+  const ny_final = parseFloat(localStorage.getItem('apoio_nY') || `${apoio_nY}`) || 0;
+  const nw_final = parseFloat(localStorage.getItem('apoio_nW') || `${apoio_nW}`) || 0.4;
 
   // se não houver imagem em memória, tenta recarregar do localStorage
   if (!lateralImg) {
     const b64 = localStorage.getItem('apoio_b64');
     if (b64) {
       lateralImg = new Image();
-      lateralImg.onload = () => { drawEverythingStep5(nx, ny, nw); };
+      lateralImg.onload = () => { drawEverythingStep5(nx_final, ny_final, nw_final); };
       lateralImg.src = b64;
       return;
     }
   }
 
-  drawEverythingStep5(nx, ny, nw);
+  drawEverythingStep5(nx_final, ny_final, nw_final);
 }
 
-function drawEverythingStep5(nx, ny, nw) {
+function drawEverythingStep5(nx_final, ny_final, nw_final) {
   ctx5.clearRect(0, 0, canvas5.width, canvas5.height);
   ctx5.fillStyle = '#fff';
   ctx5.fillRect(0, 0, canvas5.width, canvas5.height);
 
-  // imagem de apoio: reconstituída em PX a partir dos NORMALIZADOS
+  // imagem de apoio — reconstruída diretamente em PX do final (E5)
   if (lateralImg) {
-    const drawnW5 = nw * canvas5.width;
+    const drawnW5 = nw_final * CANVAS5_W;
     const drawnH5 = drawnW5 * (lateralImg.naturalHeight / lateralImg.naturalWidth);
-    const x5 = nx * canvas5.width;
-    const y5 = ny * canvas5.height;
+    const x5 = nx_final * CANVAS5_W;
+    const y5 = ny_final * CANVAS5_H;
     ctx5.drawImage(lateralImg, x5, y5, drawnW5, drawnH5);
   }
 
-  // frame
+  // frame final
   if (frameImg?.complete && frameImg.naturalWidth) {
-    ctx5.drawImage(frameImg, 0, 0, canvas5.width, canvas5.height);
+    ctx5.drawImage(frameImg, 0, 0, CANVAS5_W, CANVAS5_H);
   }
 
   // tarja (sobre o frame)
@@ -349,7 +397,7 @@ function drawEverythingStep5(nx, ny, nw) {
     const s = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
     const w = logoImg.width * s, h = logoImg.height * s;
     const centerY = 450;
-    ctx5.drawImage(logoImg, (canvas5.width - w) / 2, centerY - h / 2, w, h);
+    ctx5.drawImage(logoImg, (CANVAS5_W - w) / 2, centerY - h / 2, w, h);
   }
 
   // título
@@ -469,7 +517,7 @@ async function enviarParaGoogle() {
     background: backgroundBase64,
     preview: previewBase64,
     categoria: categoriaSelecionada || '',
-    // também mando as normalizadas se quiser registrar:
+    // mando também as frações finais (útil para auditoria/ajustes)
     apoio_nX: parseFloat(localStorage.getItem('apoio_nX') || `${apoio_nX}`),
     apoio_nY: parseFloat(localStorage.getItem('apoio_nY') || `${apoio_nY}`),
     apoio_nW: parseFloat(localStorage.getItem('apoio_nW') || `${apoio_nW}`)
