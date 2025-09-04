@@ -507,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nomeAj || emailAj) {
           const ok = confirm(
             '⚠️ Atenção!\n\n' +
-            'Tenha certeza que o seu ajudante já se cadastrou no site de compra de ingressos do CMB usando este mesmo e-mail de ajudante que você acabou de informar. \n'+
+            'Tenha certeza que o seu ajudante já se cadastrou no site de compra de ingressos do CMB usando este mesmo e-mail que você acabou de informar. \n'+
             'Ele apenas precisa apenas fazer o cadastro.'
           );
           if (!ok) return; // não avança se cancelar
@@ -546,6 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
 
 
 
