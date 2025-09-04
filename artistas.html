@@ -17,8 +17,9 @@
     .title-label { margin-top: 12px; display:block; font-weight:600; }
     .intro-box p { margin: 6px 0; }
     #avisoTexto { margin: 10px 0; color:#c0392b; display:none; }
-    .preview-wrap{ position:relative; display:inline-block; }
 
+    /* Wrapper para posicionar a plaquinha sobre o canvas */
+    .preview-wrap{ position:relative; display:inline-block; }
   </style>
 </head>
 
@@ -119,18 +120,17 @@
       <label class="title-label">Mover verticalmente</label>
       <input type="range" id="imgY" min="-500" max="500" value="0" />
 
- <!-- Wrapper para posicionar a plaquinha em cima do canvas -->
-<div class="preview-wrap">
-  <canvas id="canvas" width="1080" height="1350"></canvas>
-  <!-- Plaquinha overlay (usa o CSS .plaquinha que você já tem) -->
-  <div id="plaquinhaNome" class="plaquinha" aria-hidden="true"
-       style="position:absolute; left:50%; top:0; transform:translateX(-50%); display:none;">
-    nome
-  </div>
-</div>
+      <!-- Wrapper para posicionar a plaquinha em cima do canvas -->
+      <div class="preview-wrap">
+        <canvas id="canvas" width="1080" height="1350"></canvas>
+        <!-- Plaquinha overlay (usa o CSS .plaquinha do style.css) -->
+        <div id="plaquinhaNome" class="plaquinha" aria-hidden="true"
+             style="position:absolute; left:50%; top:0; transform:translateX(-50%); display:none;">
+          nome
+        </div>
+      </div>
 
-<div id="avisoTexto"></div>
-
+      <div id="avisoTexto"></div>
 
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
@@ -169,7 +169,7 @@
   </main>
 
   <!-- JS desta página -->
-  <script src="app-expo_artistas.js?v=2"></script>
+  <script src="app-expo_artistas.js?v=3"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -180,5 +180,3 @@
   </footer>
 </body>
 </html>
-
-
