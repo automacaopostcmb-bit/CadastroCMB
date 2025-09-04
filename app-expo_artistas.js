@@ -238,31 +238,48 @@ function getCanvasBlob() {
   });
 }
 async function shareNative() {
-  try {
-    const text = getCaptionText() || 'Comic Market Brasil';
-    const blob = await getCanvasBlob();
+  const text = getCaptionText() || 'Comic Market Brasil';
 
-    // Tenta com imagem + texto
+  // 1) Copia a legenda antes de abrir o share (para o Instagram colar)
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(text);
+    copied = true;
+  } catch(e){ /* alguns navegadores podem bloquear; seguimos mesmo assim */ }
+
+  // 2) Tenta compartilhar com imagem + texto
+  try {
+    const blob = await getCanvasBlob();
     if (blob && window.File && navigator.canShare) {
       const file = new File([blob], 'cmb-divulgacao.png', { type: 'image/png' });
       if (navigator.canShare({ files: [file] })) {
         await navigator.share({ text, files: [file] });
-        return;
+      } else if (navigator.share) {
+        await navigator.share({ text });
+      } else {
+        throw new Error('Web Share não suportado');
       }
-    }
-    // Só texto
-    if (navigator.share) {
+    } else if (navigator.share) {
       await navigator.share({ text });
-      return;
+    } else {
+      throw new Error('Web Share não suportado');
     }
-    // Fallback: copia o texto
-    await navigator.clipboard.writeText(text).catch(()=>{});
-    alert('Seu navegador não suporta compartilhamento direto. O texto foi copiado; anexe a imagem baixada no app que preferir.');
-  } catch (e) {
-    console.error(e);
-    alert('Não foi possível abrir o compartilhamento agora. Tente o botão Copiar.');
+  } catch (err) {
+    // Fallback final: já copiamos o texto, então avisa o usuário
+    console.warn(err);
+    alert('Seu navegador não suporta compartilhamento direto. A legenda já foi copiada; compartilhe a imagem e cole o texto.');
+    return;
+  }
+
+  // 3) Feedback curto para o usuário
+  const btn = document.getElementById('btnShareNative');
+  if (btn) {
+    const old = btn.textContent;
+    btn.textContent = copied ? 'Compartilhar (texto copiado ✔)' : 'Compartilhar';
+    setTimeout(() => (btn.textContent = old), 1800);
   }
 }
+
 
 /* ===========================
    ENVIO / AUTH (Apps Script)
@@ -596,3 +613,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
