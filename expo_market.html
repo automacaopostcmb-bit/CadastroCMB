@@ -11,17 +11,11 @@
   <!-- CSS externo -->
   <link rel="stylesheet" href="style.css?v=10">
 
+  <!-- Estilo leve local (pode mover para style.css) -->
   <style>
     .categoria-wrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap;margin:8px 0 10px}
     .categoria-wrap .radio{display:flex;gap:8px;align-items:center;font-size:16px}
     .categoria-wrap input[type="radio"]{width:18px;height:18px}
-
-    /* Etapas inativas não ocupam espaço (evita sobrepor clique) */
-    .step{display:none}
-    .step.active{display:block}
-
-    /* Overlay começa escondido (senão bloqueia clique) */
-    #overlay{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(255,255,255,0.7)}
   </style>
 </head>
 
@@ -33,7 +27,7 @@
     <!-- ========== ETAPA 1 ========== -->
     <section class="step active" id="step1">
       <div class="faixa-secao"><span>Boas-vindas</span></div>
-      <div class="intro-box">
+      <div id="intro-content" class="intro-box">
         <h2>Cadastro de expositor na área Market do CMB 🎉</h2>
         <p>Preencha seus dados e no fim, você poderá fazer o download da imagem gerada para divulgação.</p>
         <p>Clique em <strong>Próximo</strong> para começar!</p>
@@ -87,7 +81,7 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 4 (pré-preview com máscara) ========== -->
+    <!-- ========== ETAPA 4 ========== -->
     <section class="step" id="step4">
       <div class="faixa-secao"><span>Imagens</span></div>
 
@@ -99,35 +93,38 @@
       <div class="hint">(Outra imagem que podemos usar para mostrar mais de você.)</div>
       <input type="file" id="lateral" accept="image/*" />
 
-      <div class="faixa-secao"><span>Pré-posicionamento da imagem de apoio</span></div>
-      <label class="title-label">Tamanho (relativo ao miolo)</label>
-      <input type="range" id="size4" min="10" max="120" step="1" value="40" />
-      <label class="title-label">Posição horizontal</label>
-      <input type="range" id="x4" min="0" max="100" step="1" value="50" />
-      <label class="title-label">Posição vertical</label>
-      <input type="range" id="y4" min="0" max="100" step="1" value="50" />
-
-      <!-- Preview 4: 771 x 1173 -->
-      <canvas id="canvas4" width="771" height="1173" style="display:block;max-width:100%;margin:16px auto"></canvas>
-
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
       </div>
     </section>
 
-    <!-- ========== ETAPA 5 (poster final) ========== -->
+    <!-- ========== ETAPA 5 ========== -->
     <section class="step" id="step5">
       <div class="faixa-secao"><span>Vamos criar a sua divulgação!</span></div>
 
       <div class="faixa-secao"><span>Selecione a sua categoria:</span></div>
       <div class="categoria-wrap" id="categoriaWrap">
-        <label class="radio"><input type="radio" name="categoria" value="artista"> artista confirmado</label>
-        <label class="radio"><input type="radio" name="categoria" value="empresa"> empresa confirmada</label>
+        <label class="radio">
+          <input type="radio" name="categoria" id="cat-artista" value="artista">
+          artista confirmado
+        </label>
+        <label class="radio">
+          <input type="radio" name="categoria" id="cat-empresa" value="empresa">
+          empresa confirmada
+        </label>
       </div>
       <div id="categoriaError" class="inline-error"></div>
 
-      <canvas id="canvas5" width="1080" height="1350" style="display:block;max-width:100%;margin:16px auto"></canvas>
+      <div class="faixa-secao"><span>Imagem de apoio</span></div>
+      <label class="title-label">Tamanho</label>
+      <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
+      <label class="title-label">Mover horizontalmente</label>
+      <input type="range" id="imgX" min="-500" max="500" value="0" />
+      <label class="title-label">Mover verticalmente</label>
+      <input type="range" id="imgY" min="-500" max="500" value="0" />
+
+      <canvas id="canvas" width="1080" height="1350"></canvas>
 
       <div id="avisoTexto"></div>
 
@@ -190,8 +187,8 @@
     </div>
   </main>
 
-  <!-- Bump de versão p/ cache -->
-  <script src="app-expo_market.js?v=32"></script>
+  <!-- Bump para forçar recarregamento -->
+  <script src="app-expo_market.js?v=11"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -202,3 +199,5 @@
   </footer>
 </body>
 </html>
+
+
