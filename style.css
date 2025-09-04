@@ -189,6 +189,8 @@ canvas {
 /* Largura dos blocos (NÃO inclui o overlay) */
 #login-area, #menu{ width:100%; max-width:420px; }
 
+
+
 /* ===== Overlay de loading do INDEX ===== */
 #loading{
   position:fixed;
@@ -211,6 +213,9 @@ canvas {
   color:#000;
 }
 
+#observacao::placeholder { color:#777; }
+#observacao:focus::placeholder { opacity:0; }
+
 /* =========================
    RODAPÉ FULL-BLEED
    ========================= */
@@ -230,6 +235,7 @@ canvas {
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
+
 
 
 
