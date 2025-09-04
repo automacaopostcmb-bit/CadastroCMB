@@ -76,7 +76,8 @@ function initCanvas() {
     document.getElementById(id)?.addEventListener('input', gerarPost);
   });
 
-  document.fonts?.ready?.then(gerarPost);
+document.fonts?.ready?.then(() => { gerarPost(); updatePlaquinha(); });
+
 }
 
 /* ---- desenho ---- */
@@ -85,7 +86,31 @@ function gerarPost() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+   
+/* ---- plaquinha ---- */
+function updatePlaquinha() {
+  const tag = document.getElementById('plaquinhaNome');
+  if (!tag || !canvas) return;
 
+  const nome = (document.getElementById('nomeArtista')?.value || '').trim();
+  if (!nome) { tag.style.display = 'none'; return; }
+
+  // Mostra + texto
+  tag.textContent = nome;
+  tag.style.display = 'inline-block';
+
+  // Mantém alinhado ao centro do canvas e na altura ~180px do layout original
+  const scale = canvas.clientWidth / canvas.width; // ex.: 500 / 1080
+  const centerX = canvas.clientWidth / 2;
+  const yCanvas = 180; // Y usado antes no canvas
+
+  tag.style.left = centerX + 'px';
+  tag.style.top  = (yCanvas * scale) + 'px';
+  tag.style.transform = `translateX(-50%) scale(${scale})`;
+}
+
+
+   
   // foto base (ajustável)
   if (fotoImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
@@ -105,15 +130,7 @@ function gerarPost() {
   }
 
   // Nome do artista (topo)
-  const nome = (document.getElementById('nomeArtista')?.value || '').trim();
-  if (nome) {
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 8;
-    ctx.font = 'bold 80px "Comic Relief"';
-    drawTextWithStrokeWrap(ctx, nome, canvas.width / 2, 180, 920, 2, 76);
-  }
+ updatePlaquinha(); // atualiza o overlay HTML com o nome
 
   const aviso = document.getElementById('avisoTexto');
   if (aviso) { aviso.textContent = ''; aviso.style.display = 'none'; }
@@ -358,7 +375,7 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-  if (currentStep === 6) { try { gerarPost(); } catch(e) {} }
+  if (currentStep === 6) { try { gerarPost(); updatePlaquinha(); } catch(e) {} }
   if (currentStep === 7) { try { buildReview(); } catch(e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
@@ -393,6 +410,9 @@ function goToMenu() {
 /* ===========================
    BOOTSTRAP
    =========================== */
+
+window.addEventListener('resize', updatePlaquinha);
+
 document.addEventListener('DOMContentLoaded', () => {
   const isWizardPage = !!document.querySelector('.step') && !!document.getElementById('wizard-indicator');
   if (!isWizardPage) return;
@@ -425,5 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
 
 
