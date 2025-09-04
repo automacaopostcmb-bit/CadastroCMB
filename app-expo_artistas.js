@@ -1,13 +1,14 @@
 /* =========================================================
-   CONFIGURAÇÃO – ARTISTAS
+   CONFIG – ARTISTAS (IDs, URLs e moldes)
    ========================================================= */
-const FRAME_URL =
-  // Troque pela sua moldura para artistas quando subir no CDN:
-  'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_artistas.png';
+const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/areaartista.png';
+
+/* URL do Web App (mesmo arquivo Apps Script abaixo, que tem doGet + doPost).
+   Depois de "Deploy > Web app", copie a URL ".../exec" e cole aqui: */
+const WEBAPP_URL = 'PASTE_YOUR_DEPLOYED_WEBAPP_EXEC_URL_HERE'; // <<< SUBSTITUIR APÓS DEPLOY
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
-/* Campos que aparecerão no review */
 const REVIEW_FIELDS = [
   { id: 'nomeArtista',   label: 'Nome do artista' },
   { id: 'emailArtista',  label: 'E-mail do artista' },
@@ -69,7 +70,7 @@ function initCanvas() {
     if (e.target.files && e.target.files[0]) r.readAsDataURL(e.target.files[0]);
   });
 
-  // sliders + nome (em caso de edição no passo 3)
+  // sliders + nome
   ['imgScale', 'imgX', 'imgY', 'nomeArtista'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', gerarPost);
   });
@@ -87,8 +88,8 @@ function gerarPost() {
   // foto base (ajustável)
   if (fotoImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
-    const anchorPointX = canvas.width / 2;   // centro X
-    const anchorPointY = canvas.height * 0.52; // centro Y levemente abaixo do meio
+    const anchorPointX = canvas.width / 2;
+    const anchorPointY = canvas.height * 0.52;
     const offsetX = parseInt(document.getElementById('imgX').value || '0', 10);
     const offsetY = parseInt(document.getElementById('imgY').value || '0', 10);
     const w = fotoImg.width * scale, h = fotoImg.height * scale;
@@ -102,20 +103,17 @@ function gerarPost() {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  // Nome do artista sobreposto (topo)
+  // Nome do artista (topo)
   const nome = (document.getElementById('nomeArtista')?.value || '').trim();
   if (nome) {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffffff';
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 8;
-
-    // título com leve stroke para legibilidade
     ctx.font = 'bold 80px "Comic Relief"';
     drawTextWithStrokeWrap(ctx, nome, canvas.width / 2, 180, 920, 2, 76);
   }
 
-  // aviso (se necessário no futuro)
   const aviso = document.getElementById('avisoTexto');
   if (aviso) { aviso.textContent = ''; aviso.style.display = 'none'; }
 }
@@ -155,10 +153,27 @@ function baixarImagem() {
 }
 
 /* ===========================
-   ENVIO (Apps Script)
+   LEGENDA (Instagram)
+   =========================== */
+function buildCaptionFromForm() {
+  const nome = (document.getElementById('nomeArtista')?.value || '').trim();
+  const bio  = (document.getElementById('biografia')?.value || '').trim();
+
+  const head = `Estarei na área dos artistas do CMB 2026 @comicmarketbrasil!`;
+  const place = `📍 FAPCOM – Vila Mariana, São Paulo`;
+  const date  = `Dia 16 e 17 de agosto`;
+  const tickets = `🎟️ Mais informações e ingressos:\ncomicmarketbrasil.com.br`;
+  const tags = `#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom`;
+
+  // Coloco o nome antes da bio para personalizar
+  const corpo = bio ? `${nome ? nome + ' — ' : ''}${bio}` : (nome || '');
+  return [head, '', corpo, '', place, date, '', tickets, '', tags].join('\n');
+}
+
+/* ===========================
+   ENVIO / AUTH (Apps Script único)
    =========================== */
 async function enviarParaGoogle() {
-  // obrigatórios por etapa
   const obrig = ['comprovante','nomeArtista','emailArtista','biografia','fotoDivulgacao'];
 
   let faltando = [];
@@ -168,7 +183,6 @@ async function enviarParaGoogle() {
     if (!v) faltando.push(id);
   });
 
-  // validações de e-mail
   const emailArtista = (document.getElementById('emailArtista')?.value || '').trim();
   const emailAjudante = (document.getElementById('emailAjudante')?.value || '').trim();
 
@@ -201,22 +215,23 @@ async function enviarParaGoogle() {
     return { name: f.name, type: f.type, content: b64.split(',')[1] };
   }
 
-  const comprovanteB64   = await processarImagem('comprovante');
-  const fotoDivulgB64    = await processarImagem('fotoDivulgacao');
+  const comprovanteB64 = await processarImagem('comprovante');
+  const fotoDivulgB64  = await processarImagem('fotoDivulgacao');
 
-  // preview do canvas
   let previewBase64 = null;
   if (canvas) {
     const dataURL = canvas.toDataURL('image/png');
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
+  const legenda = buildCaptionFromForm();
   const dados = {
     nomeArtista:   document.getElementById('nomeArtista').value.trim(),
     emailArtista:  emailArtista,
     nomeAjudante:  (document.getElementById('nomeAjudante').value || '').trim(),
     emailAjudante: emailAjudante,
     biografia:     (document.getElementById('biografia').value || '').trim(),
+    legenda,
     comprovante:   comprovanteB64,
     fotoDivulgacao: fotoDivulgB64,
     preview:       previewBase64
@@ -226,10 +241,7 @@ async function enviarParaGoogle() {
   overlay.style.display = 'flex';
 
   try {
-    const response = await fetch(
-      'https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec',
-      { method: 'POST', body: JSON.stringify(dados) }
-    );
+    const response = await fetch(WEBAPP_URL, { method: 'POST', body: JSON.stringify(dados) });
     const result = await response.json();
     const msg = document.getElementById('mensagem');
     msg.style.display = 'block';
@@ -264,14 +276,12 @@ async function enviarParaGoogle() {
 /* ===========================
    AUTENTICAÇÃO
    =========================== */
-const API_URL =
-  'https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec';
 const PAGINA = 'expo_artistas';
-
 async function checkAuth() {
   const chave = (localStorage.getItem('chave') || '').trim();
   if (!chave) { alert('Faça login primeiro.'); window.location.href = 'index.html'; return; }
-  const resp = await fetch(`${API_URL}?chave=${encodeURIComponent(chave)}&pagina=${encodeURIComponent(PAGINA)}`);
+  const url = `${WEBAPP_URL}?chave=${encodeURIComponent(chave)}&pagina=${encodeURIComponent(PAGINA)}&v=${Date.now()}`;
+  const resp = await fetch(url);
   const data = await resp.json();
   if (!data.permitido) { alert('Você não tem permissão para acessar esta página.'); window.location.href = 'index.html'; }
 }
@@ -410,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showStep(1);
 });
 
-/* Expor funções globais esperadas pelo HTML */
+/* Expor funções globais */
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
