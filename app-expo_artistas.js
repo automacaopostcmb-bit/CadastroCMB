@@ -6,11 +6,14 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyAIRNSN5yaoSIKzxgf5
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
+/* Campos que entram na revisão */
 const REVIEW_FIELDS = [
-  { id: 'nomeArtista',   label: 'Nome do artista' },
-  { id: 'emailArtista',  label: 'E-mail do artista' },
-  { id: 'nomeAjudante',  label: 'Nome do ajudante' },
-  { id: 'emailAjudante', label: 'E-mail do ajudante' }
+  { id: 'nomeCompleto',    label: 'Nome completo' },
+  { id: 'nomeArtistico',   label: 'Nome artístico' },
+  { id: 'emailArtista',    label: 'E-mail do artista' },
+  { id: 'telefoneArtista', label: 'Telefone do artista' },
+  { id: 'nomeAjudante',    label: 'Nome do ajudante' },
+  { id: 'emailAjudante',   label: 'E-mail do ajudante' }
 ];
 
 /* ===========================
@@ -27,13 +30,17 @@ function escapeHtml(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
-// Remove invisíveis/espacos e normaliza antes de validar e enviar
+// Saneia e-mails (remove invisíveis e espaços, normaliza)
 function cleanEmailValue(raw) {
   let v = (raw || '');
   if (v.normalize) v = v.normalize('NFKC');
   v = v.replace(/[\u200B-\u200D\uFEFF\u202A-\u202E\u2066-\u2069]/g, '');
   v = v.replace(/\s+/g, '');
   return v;
+}
+// Telefone simples: mantém dígitos; válido se tiver >= 8 dígitos
+function normalizePhone(raw) {
+  return (raw || '').replace(/\D+/g, '');
 }
 
 /* ===========================
@@ -42,9 +49,9 @@ function cleanEmailValue(raw) {
 let canvas, ctx, frameImg, fotoImg;
 let fontsReady = false;
 
-// Posição da plaquinha (coordenadas no canvas 1080x1350)
-let plaquinhaX = 140;  // aumentar = mais à direita
-let plaquinhaY = 180;  // aumentar = mais para baixo
+// posição da plaquinha no canvas (1080x1350)
+let plaquinhaX = 140;  // + direita
+let plaquinhaY = 180;  // + baixo
 
 /* ===========================
    CANVAS
@@ -68,7 +75,8 @@ function initCanvas() {
     if (e.target.files && e.target.files[0]) r.readAsDataURL(e.target.files[0]);
   });
 
-  ['imgScale', 'imgX', 'imgY', 'nomeArtista'].forEach((id) => {
+  // sliders + nome artístico (muda a plaquinha)
+  ['imgScale', 'imgX', 'imgY', 'nomeArtistico'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', gerarPost);
   });
 
@@ -81,12 +89,11 @@ function initCanvas() {
 function gerarPost() {
   if (!ctx) return;
 
-  // fundo branco
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // foto base (ajustável)
+  // foto base
   if (fotoImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = canvas.width / 2;
@@ -104,8 +111,8 @@ function gerarPost() {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  // plaquinha no canvas
-  const nome = (document.getElementById('nomeArtista')?.value || '').trim();
+  // plaquinha com o Nome artístico
+  const nome = (document.getElementById('nomeArtistico')?.value || '').trim();
   if (nome) drawPlaquinhaCanvas(ctx, nome, plaquinhaX, plaquinhaY);
 
   const aviso = document.getElementById('avisoTexto');
@@ -115,7 +122,6 @@ function gerarPost() {
 /* ===========================
    PLAQUINHA NO CANVAS
    =========================== */
-// Visual: fundo amarelo, borda 6px, raio 6px, sombra -7/+7, 1 linha só
 function drawPlaquinhaCanvas(c, text, x, y) {
   const PADDING_X = 28;
   const PADDING_Y = 14;
@@ -123,7 +129,7 @@ function drawPlaquinhaCanvas(c, text, x, y) {
   const RADIUS = 6;
   const SHADOW_X = -7;
   const SHADOW_Y = 7;
-  const MAX_WIDTH = 920;
+  const MAX_WIDTH = 940; // limite para não estourar
 
   let fontSize = 64;
   c.font = `700 ${fontSize}px "Comic Relief", Arial, sans-serif`;
@@ -139,20 +145,16 @@ function drawPlaquinhaCanvas(c, text, x, y) {
   const rectW = Math.ceil(textW + PADDING_X * 2);
   const rectH = Math.ceil(fontSize * 1.1 + PADDING_Y * 2);
 
-  // sombra (atrás, com área incluindo borda)
+  // sombra
   drawRoundedRect(c, x + SHADOW_X, y + SHADOW_Y, rectW + BORDER * 2, rectH + BORDER * 2, RADIUS);
-  c.fillStyle = '#000';
-  c.fill();
+  c.fillStyle = '#000'; c.fill();
 
   // caixa amarela
   drawRoundedRect(c, x, y, rectW, rectH, RADIUS);
-  c.fillStyle = '#ffd400';
-  c.fill();
+  c.fillStyle = '#ffd400'; c.fill();
 
-  // borda preta
-  c.lineWidth = BORDER;
-  c.strokeStyle = '#000';
-  c.stroke();
+  // borda
+  c.lineWidth = BORDER; c.strokeStyle = '#000'; c.stroke();
 
   // texto
   c.fillStyle = '#111';
@@ -160,8 +162,6 @@ function drawPlaquinhaCanvas(c, text, x, y) {
   c.textBaseline = 'top';
   c.fillText(text, x + PADDING_X, y + PADDING_Y);
 }
-
-// utilitário: retângulo arredondado
 function drawRoundedRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   c.beginPath();
@@ -178,20 +178,28 @@ function drawRoundedRect(c, x, y, w, h, r) {
 }
 
 /* ===========================
-   DOWNLOAD
+   DOWNLOAD + CAPTION VISÍVEL
    =========================== */
 function baixarImagem() {
   const link = document.createElement('a');
   link.download = 'post_artista.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
+
+  // mostrar a caixa de descrição com o texto pronto
+  const wrap = document.getElementById('captionWrap');
+  const box  = document.getElementById('captionBox');
+  if (wrap && box) {
+    box.value = buildCaptionFromForm();
+    wrap.style.display = 'block';
+  }
 }
 
 /* ===========================
    LEGENDA (Instagram)
    =========================== */
 function buildCaptionFromForm() {
-  const nome = (document.getElementById('nomeArtista')?.value || '').trim();
+  const nomeArtistico = (document.getElementById('nomeArtistico')?.value || '').trim();
   const bio  = (document.getElementById('biografia')?.value || '').trim();
 
   const head = `Estarei na área dos artistas do CMB 2026 @comicmarketbrasil!`;
@@ -200,7 +208,7 @@ function buildCaptionFromForm() {
   const tickets = `🎟️ Mais informações e ingressos:\ncomicmarketbrasil.com.br`;
   const tags = `#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom`;
 
-  const corpo = bio ? `${nome ? nome + ' — ' : ''}${bio}` : (nome || '');
+  const corpo = bio ? `${nomeArtistico ? nomeArtistico + ' — ' : ''}${bio}` : (nomeArtistico || '');
   return [head, '', corpo, '', place, date, '', tickets, '', tags].join('\n');
 }
 
@@ -208,7 +216,7 @@ function buildCaptionFromForm() {
    ENVIO / AUTH (Apps Script)
    =========================== */
 async function enviarParaGoogle() {
-  const obrig = ['comprovante','nomeArtista','emailArtista','biografia','fotoDivulgacao'];
+  const obrig = ['comprovante','nomeCompleto','nomeArtistico','emailArtista','telefoneArtista','biografia','fotoDivulgacao'];
 
   let faltando = [];
   obrig.forEach((id) => {
@@ -219,6 +227,8 @@ async function enviarParaGoogle() {
 
   const emailArtista  = cleanEmailValue(document.getElementById('emailArtista')?.value);
   const emailAjudante = cleanEmailValue(document.getElementById('emailAjudante')?.value);
+  const telRaw = document.getElementById('telefoneArtista')?.value || '';
+  const telNorm = normalizePhone(telRaw);
 
   const okEmailArtista = EMAIL_REGEX.test(emailArtista);
   showFieldError('emailArtista', okEmailArtista ? '' : 'Informe um e-mail válido.');
@@ -229,7 +239,10 @@ async function enviarParaGoogle() {
     showFieldError('emailAjudante', okEmailAjudante ? '' : 'E-mail inválido.');
   }
 
-  if (faltando.length || !okEmailArtista || !okEmailAjudante) {
+  const okTelefone = telNorm.length >= 8;
+  showFieldError('telefoneArtista', okTelefone ? '' : 'Telefone inválido.');
+
+  if (faltando.length || !okEmailArtista || !okEmailAjudante || !okTelefone) {
     const msg = document.getElementById('mensagem');
     msg.textContent = '❌ Preencha os campos obrigatórios e corrija os erros.';
     msg.style.color = 'red';
@@ -260,15 +273,17 @@ async function enviarParaGoogle() {
 
   const legenda = buildCaptionFromForm();
   const dados = {
-    nomeArtista:   (document.getElementById('nomeArtista')?.value || '').trim(),
+    nomeCompleto:   (document.getElementById('nomeCompleto')?.value || '').trim(),
+    nomeArtistico:  (document.getElementById('nomeArtistico')?.value || '').trim(),
     emailArtista,
-    nomeAjudante:  (document.getElementById('nomeAjudante')?.value || '').trim(),
+    telefoneArtista: telNorm,
+    nomeAjudante:    (document.getElementById('nomeAjudante')?.value || '').trim(),
     emailAjudante,
-    biografia:     (document.getElementById('biografia')?.value || '').trim(),
+    biografia:       (document.getElementById('biografia')?.value || '').trim(),
     legenda,
-    comprovante:   comprovanteB64,
-    fotoDivulgacao: fotoDivulgB64,
-    preview:       previewBase64
+    comprovante:     comprovanteB64,
+    fotoDivulgacao:  fotoDivulgB64,
+    preview:         previewBase64
   };
 
   const overlay = document.getElementById('overlay');
@@ -283,7 +298,7 @@ async function enviarParaGoogle() {
     if (result.status === 'success') {
       msg.textContent = '✅ Enviado com sucesso!';
       msg.style.color = 'green';
-      document.getElementById('step7').style.display = 'none';
+      document.getElementById('step8').style.display = 'none';
       document.getElementById('wizard-indicator').style.display = 'none';
       document.getElementById('link-topo').style.display = 'none';
       document.getElementById('final-screen').style.display = 'block';
@@ -326,34 +341,39 @@ async function checkAuth() {
 const REQUIRED_BY_STEP = {
   1: [],
   2: ['comprovante'],
-  3: ['nomeArtista','emailArtista'],
-  4: ['biografia'],
-  5: ['fotoDivulgacao'],
-  6: [],
-  7: []
+  3: ['nomeCompleto','nomeArtistico','emailArtista','telefoneArtista'],
+  4: [], // ajudante opcional
+  5: ['biografia'],
+  6: ['fotoDivulgacao'],
+  7: [],
+  8: []
 };
 
 const STEP_VALIDATORS = {
   3: () => {
-    const nome = (document.getElementById('nomeArtista')?.value || '').trim();
+    const nomeCompleto  = (document.getElementById('nomeCompleto')?.value || '').trim();
+    const nomeArtistico = (document.getElementById('nomeArtistico')?.value || '').trim();
     const emailArtista  = cleanEmailValue(document.getElementById('emailArtista')?.value);
-    const emailAjudante = cleanEmailValue(document.getElementById('emailAjudante')?.value);
+    const telNorm       = normalizePhone(document.getElementById('telefoneArtista')?.value || '');
 
     showFieldError('emailArtista', '');
-    showFieldError('emailAjudante', '');
+    showFieldError('telefoneArtista', '');
 
-    if (!nome) return false;
-    if (!EMAIL_REGEX.test(emailArtista)) {
-      showFieldError('emailArtista', 'Informe um e-mail válido.');
-      return false;
-    }
+    if (!nomeCompleto || !nomeArtistico) return false;
+    if (!EMAIL_REGEX.test(emailArtista)) { showFieldError('emailArtista','Informe um e-mail válido.'); return false; }
+    if (telNorm.length < 8) { showFieldError('telefoneArtista','Telefone inválido.'); return false; }
+    return true;
+  },
+  4: () => {
+    const emailAjudante = cleanEmailValue(document.getElementById('emailAjudante')?.value);
+    showFieldError('emailAjudante','');
     if (emailAjudante && !EMAIL_REGEX.test(emailAjudante)) {
-      showFieldError('emailAjudante', 'E-mail inválido.');
+      showFieldError('emailAjudante','E-mail inválido.');
       return false;
     }
     return true;
   },
-  7: () => { buildReview(); return true; }
+  8: () => { buildReview(); return true; }
 };
 
 function isFilled(id) {
@@ -397,8 +417,8 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-  if (currentStep === 6) { try { gerarPost(); } catch(e) {} }
-  if (currentStep === 7) { try { buildReview(); } catch(e) { console.error('buildReview error', e); } }
+  if (currentStep === 7) { try { gerarPost(); } catch(e) {} }
+  if (currentStep === 8) { try { buildReview(); } catch(e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -442,12 +462,12 @@ document.addEventListener('DOMContentLoaded', () => {
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
 
-  // revalida em todos os eventos comuns (inclui autofill/colar)
-  ['nomeArtista','emailArtista','emailAjudante'].forEach((id) => {
+  // revalida ao digitar/colar/blur/autofill nas etapas 3 e 4
+  ['nomeCompleto','nomeArtistico','emailArtista','telefoneArtista','nomeAjudante','emailAjudante'].forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
     ['input','change','blur','keyup'].forEach(evt =>
-      el.addEventListener(evt, () => { if (currentStep === 3) revalidateStepNav(); })
+      el.addEventListener(evt, () => { revalidateStepNav(); })
     );
   });
 
@@ -465,6 +485,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target.matches('[data-next]')) { if (validateStep(currentStep)) showStep(currentStep + 1); }
     if (e.target.matches('[data-prev]')) showStep(currentStep - 1);
   });
+
+  // botão Copiar legenda
+  const btnCopy = document.getElementById('btnCopyCaption');
+  if (btnCopy) {
+    btnCopy.addEventListener('click', async () => {
+      const box = document.getElementById('captionBox');
+      if (!box) return;
+      try {
+        await navigator.clipboard.writeText(box.value);
+        btnCopy.textContent = 'Copiado ✔';
+        setTimeout(()=>btnCopy.textContent='Copiar', 1500);
+      } catch(e) {
+        // fallback
+        box.select(); document.execCommand('copy');
+        btnCopy.textContent = 'Copiado ✔';
+        setTimeout(()=>btnCopy.textContent='Copiar', 1500);
+      }
+    });
+  }
 
   showStep(1);
 });
