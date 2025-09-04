@@ -6,7 +6,7 @@ const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyAIRNSN5yaoSIKzxgf5
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
-/* Campos que entram na revisão */
+/* Campos que entram na revisão final */
 const REVIEW_FIELDS = [
   { id: 'nomeCompleto',    label: 'Nome completo' },
   { id: 'nomeArtistico',   label: 'Nome artístico' },
@@ -14,6 +14,7 @@ const REVIEW_FIELDS = [
   { id: 'telefoneArtista', label: 'Telefone do artista' },
   { id: 'nomeAjudante',    label: 'Nome do ajudante' },
   { id: 'emailAjudante',   label: 'E-mail do ajudante' }
+  { id: 'observacao',     label: 'Observação' },
 ];
 
 /* ===========================
@@ -271,20 +272,30 @@ async function enviarParaGoogle() {
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
-  const legenda = buildCaptionFromForm();
-  const dados = {
-    nomeCompleto:   (document.getElementById('nomeCompleto')?.value || '').trim(),
-    nomeArtistico:  (document.getElementById('nomeArtistico')?.value || '').trim(),
-    emailArtista,
-    telefoneArtista: telNorm,
-    nomeAjudante:    (document.getElementById('nomeAjudante')?.value || '').trim(),
-    emailAjudante,
-    biografia:       (document.getElementById('biografia')?.value || '').trim(),
-    legenda,
-    comprovante:     comprovanteB64,
-    fotoDivulgacao:  fotoDivulgB64,
-    preview:         previewBase64
-  };
+const legenda = buildCaptionFromForm();
+
+// ⬇️ NOVO: pega o texto da observação (ou vazio)
+const obs = (document.getElementById('observacao')?.value || '').trim();
+
+const dados = {
+  nomeCompleto:   (document.getElementById('nomeCompleto')?.value || '').trim(),
+  nomeArtistico:  (document.getElementById('nomeArtistico')?.value || '').trim(),
+  emailArtista,
+  telefoneArtista: telNorm,
+  nomeAjudante:    (document.getElementById('nomeAjudante')?.value || '').trim(),
+  emailAjudante,
+  biografia:       (document.getElementById('biografia')?.value || '').trim(),
+  legenda,
+  comprovante:     comprovanteB64,
+  fotoDivulgacao:  fotoDivulgB64,
+  preview:         previewBase64
+};
+
+// ⬇️ NOVO: só envia “observacao” se o usuário escreveu algo
+if (obs) {
+  dados.observacao = obs;
+}
+
 
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'flex';
@@ -535,3 +546,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
