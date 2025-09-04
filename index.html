@@ -4,39 +4,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Cadastro de expositores CMB</title>
-<meta name="description" content="Faça seu cadastro como expositor para o CMB.">
-  
-<!-- Open Graph (WhatsApp/Facebook) -->
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Comic Market Brasil">
-<meta property="og:title" content="Cadastro de expositores CMB">
-<meta property="og:description" content="Faça seu cadastro de expositor para o CMB.">
-<meta property="og:url" content="https://automacaopostcmb-bit.github.io/CadastroCMB/index.html">
-<meta property="og:image" content="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/og-index.jpg?v=4">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+  <meta name="description" content="Faça seu cadastro como expositor para o CMB.">
 
-<!-- Favicons -->
-<link rel="icon" type="image/png"
-      href="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/favicon.png?v=3" sizes="32x32">
-<link rel="apple-touch-icon"
-      href="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/apple-touch-icon.png?v=3" sizes="180x180">
-<link rel="shortcut icon"
-      href="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/favicon.ico?v=3">
-<meta name="theme-color" content="#0286ff">
+  <!-- Open Graph (WhatsApp/Facebook) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Comic Market Brasil">
+  <meta property="og:title" content="Cadastro de expositores CMB">
+  <meta property="og:description" content="Faça seu cadastro de expositor para o CMB.">
+  <meta property="og:url" content="https://automacaopostcmb-bit.github.io/CadastroCMB/index.html">
+  <meta property="og:image" content="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/og-index.jpg?v=4">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
-  
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/favicon.png?v=3" sizes="32x32">
+  <link rel="apple-touch-icon" href="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/apple-touch-icon.png?v=3" sizes="180x180">
+  <link rel="shortcut icon" href="https://automacaopostcmb-bit.github.io/CadastroCMB/assets/favicon.ico?v=3">
+  <meta name="theme-color" content="#0286ff">
+
   <!-- CSS global -->
   <link rel="stylesheet" href="style.css?v=52">
 
-  <!-- Body básico; layout vem do CSS -->
   <style>
     html, body { height: 100%; }
     body { margin: 0; }
   </style>
 </head>
 <body>
-  <!-- Wrapper central que alinha tudo -->
   <div class="page-center" style="--center-offset: -60px;">
     <img src="assets/logo-cmb.png" alt="Comic Market Brasil" class="header-logo">
 
@@ -55,20 +49,22 @@
     </div>
   </div>
 
-  <!-- Overlay de loading (fora da .page-center para cobrir a tela toda) -->
+  <!-- Overlay de loading -->
   <div id="loading">
     <div class="loading-bubble">Carregando páginas…</div>
   </div>
 
   <script>
+  // Endpoint do seu Apps Script de auth/menu
   const API_URL = "https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec";
 
+  // Definição das páginas do menu
   const paginas = [
-    {nome: "areaartista",        label: "Área dos Artistas"},
-    {nome: "expo_business",        label: "Expositor Área Business"},
-    {nome: "expo_market",          label: "Expositor Área Market"},
-    {nome: "cadastro_masterclass", label: "Cadastro Masterclass"},
-    {nome: "cadastro_lancamento",  label: "Cadastro de Lançamento"},
+    { nome: "areaartista",         label: "Área dos Artistas", href: "artistas.html" },
+    { nome: "expo_business",       label: "Expositor Área Business", href: "expo_business.html" },
+    { nome: "expo_market",         label: "Expositor Área Market",   href: "expo_market.html" },
+    { nome: "cadastro_masterclass",label: "Cadastro Masterclass",     href: "cadastro_masterclass.html" },
+    { nome: "cadastro_lancamento", label: "Cadastro de Lançamento",   href: "cadastro_lancamento.html" },
   ];
 
   let isLoading = false;
@@ -92,7 +88,6 @@
       document.getElementById("login-area").style.display = "none";
       carregarMenu();
     } else {
-      // acesso “frio” — exige login
       localStorage.removeItem("chave");
       document.getElementById("menu").style.display = "none";
       document.getElementById("botoes").innerHTML = "";
@@ -139,15 +134,22 @@
     titulo.style.display  = "none";
     loginAr.style.display = "none";
     menu.style.display    = "none";
-    loading.style.display = "grid";   // ✅ centraliza o balão
+    loading.style.display = "grid";
 
     let algumPermitido = false;
 
     try {
-      // UMA chamada: retorna todas as permissões da chave
-      const resp = await fetch(`${API_URL}?chave=${encodeURIComponent(chave)}`);
+      // Chama o backend pedindo o "menu" (com cache-buster)
+      const resp = await fetch(`${API_URL}?chave=${encodeURIComponent(chave)}&menu=1&v=${Date.now()}`);
       const data = await resp.json();
-      const perms = data.permissoes || {};
+
+      // Aceita dois formatos: {permissoes:{...}} OU {paginas:{...}}
+      let perms = data.permissoes || data.paginas || {};
+
+      // Normaliza: se vier "expo_artistas", espelha em "areaartista"
+      if (typeof perms.expo_artistas !== "undefined" && typeof perms.areaartista === "undefined") {
+        perms.areaartista = !!perms.expo_artistas;
+      }
 
       area.innerHTML = "";
 
@@ -157,8 +159,8 @@
           const btn = document.createElement("button");
           btn.textContent = pag.label;
           btn.addEventListener("click", () => {
-            window.location.href = `${pag.nome}.html`;
-          }); // sem { once:true } para reuso ao voltar
+            window.location.href = pag.href || `${pag.nome}.html`;
+          });
           area.appendChild(btn);
         }
       });
@@ -169,7 +171,7 @@
       logout();
       return;
     } finally {
-      loading.style.display = "none"; // ✅ esconde o overlay
+      loading.style.display = "none";
       setLoading(false);
     }
 
@@ -202,18 +204,3 @@
   </footer>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
