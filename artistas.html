@@ -17,9 +17,11 @@
     .title-label { margin-top: 12px; display:block; font-weight:600; }
     .intro-box p { margin: 6px 0; }
     #avisoTexto { margin: 10px 0; color:#c0392b; display:none; }
+
+    /* wrapper do canvas + overlay */
     .preview-wrap{ position:relative; display:inline-block; }
 
-    /* Ajuste da plaquinha */
+    /* Plaquinha */
     .plaquinha {
       display:inline-block;
       padding:.3em .8em;
@@ -31,8 +33,9 @@
       box-shadow:-7px 7px 0 #000;
       position:relative;
       z-index:1;
-      white-space: nowrap;   /* não quebra linha */
+      white-space: nowrap;   /* 1 linha sempre */
       text-align: left;      /* alinhado à esquerda */
+      pointer-events: none;  /* NÃO bloqueia cliques nos botões */
     }
   </style>
 </head>
@@ -191,4 +194,3 @@
   </footer>
 </body>
 </html>
-
