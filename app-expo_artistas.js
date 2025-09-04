@@ -410,6 +410,10 @@ function revalidateStepNav() {
 }
 
 let steps = [], totalSteps = 0, currentStep = 1;
+
+// >>> etapa do ajudante para o alerta
+const AJUDANTE_STEP = 4;
+
 function updateIndicator() {
   const ind = document.getElementById('wizard-indicator');
   if (ind) ind.textContent = `Etapa ${currentStep} de ${totalSteps}`;
@@ -482,7 +486,26 @@ document.addEventListener('DOMContentLoaded', () => {
     revalidateStepNav();
   });
   document.addEventListener('click', (e) => {
-    if (e.target.matches('[data-next]')) { if (validateStep(currentStep)) showStep(currentStep + 1); }
+    if (e.target.matches('[data-next]')) {
+      if (!validateStep(currentStep)) return;
+
+      // ⚠️ Aviso ao sair da etapa do ajudante se houver dados preenchidos
+      if (currentStep === AJUDANTE_STEP) {
+        const nomeAj  = (document.getElementById('nomeAjudante')?.value || '').trim();
+        const emailAj = cleanEmailValue(document.getElementById('emailAjudante')?.value || '');
+        if (nomeAj || emailAj) {
+          const ok = confirm(
+            '⚠️ Atenção!\n\n' +
+            'Se certifique que o seu ajudante fez o cadastro no site de compra de ingresso do CMB\n' +
+            'utilizando ESSE e-mail do ajudante.'
+          );
+          if (!ok) return; // não avança se cancelar
+        }
+      }
+
+      showStep(currentStep + 1);
+    }
+
     if (e.target.matches('[data-prev]')) showStep(currentStep - 1);
   });
 
