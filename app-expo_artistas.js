@@ -20,7 +20,7 @@ let canvas, ctx, frameImg, fotoImg;
 
 // Posição inicial da plaquinha (em px no canvas 1080x1350)
 let plaquinhaX = 140;
-let plaquinhaY = 180;
+let plaquinhaY = 1000;
 
 /* ===========================
    CANVAS + PLAQUINHA
@@ -115,3 +115,4 @@ function gerarPost() {
    RESTANTE DO SEU JS ORIGINAL
    =========================== */
 // ... [toda a parte de envio, validação, review, wizard etc. permanece igual]
+
