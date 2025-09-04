@@ -54,8 +54,8 @@
     <section class="step active" id="step1">
       <div class="faixa-secao"><span>Boas-vindas</span></div>
       <div id="intro-content" class="intro-box">
-        <h2>Cadastro para Mesas da Área dos Artistas 🎨</h2>
-        <p>Preencha seus dados, envie os arquivos necessários e no final você poderá baixar uma imagem de divulgação com seu nome artístico.</p>
+        <h2>Divulgação Área dos Artistas CMB 🎨</h2>
+        <p>Artista, parabéns por fazer parte da edição do CMB desse ano! Esse formulário é para a criação da sua imagem de divulgação, preencha seus dados e divulgue sua presença.</p>
         <p>Clique em <strong>Próximo</strong> para começar!</p>
       </div>
       <div class="button-row">
@@ -67,7 +67,7 @@
     <section class="step" id="step2">
       <div class="faixa-secao"><span>Comprovante de Pagamento*</span></div>
 
-      <label class="title-label">Envie a foto do comprovante*</label>
+      <label class="title-label">Envie a foto do comprovante de pagamento da mesa*</label>
       <div class="hint">(JPG/PNG ou screenshot nítido)</div>
       <input type="file" id="comprovante" accept="image/*" />
       <div id="comprovanteError" class="inline-error"></div>
@@ -85,7 +85,7 @@
       <label class="title-label">Nome completo*</label>
       <input type="text" id="nomeCompleto" />
 
-      <label class="title-label">Nome artístico* (vai na plaquinha)</label>
+      <label class="title-label">Nome artístico* (Como você será divulgado)</label>
       <input type="text" id="nomeArtistico" />
 
       <label class="title-label">E-mail do artista*</label>
@@ -125,12 +125,17 @@
 
     <!-- ========== ETAPA 5 ========== -->
     <section class="step" id="step5">
-      <div class="faixa-secao"><span>Sua biografia*</span></div>
+      <div class="faixa-secao"><span>Sobre você*</span></div>
 
       <label class="title-label">Biografia*</label>
       <div class="hint">(Sem limite – escreva à vontade)</div>
       <textarea id="biografia" rows="8" placeholder="Conte sobre você, trabalhos, publicações, estilo, etc."></textarea>
 
+<label class="title-label">Alguma observação?</label>
+<textarea id="observacao" rows="4"
+  placeholder="Exemplo: Se possível eu queria dividir a mesa com o artista X!"></textarea>
+
+      
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
         <button class="btn-nav btn-proximo" data-next>Próximo</button>
@@ -226,3 +231,4 @@
   </footer>
 </body>
 </html>
+
