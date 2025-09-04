@@ -91,6 +91,21 @@ canvas {
   font-size:16px; margin:16px auto 6px;
 }
 
+/* O selo da plaquinha */
+.plaquinha{
+  display:inline-block;
+  padding:.3em .8em;
+  background:#ffd400;            /* amarelo */
+  border:6px solid #000;         /* contorno preto */
+  border-radius:6px;
+  color:#111;
+  font:700 clamp(24px, 4vw, 46px)/1.1 "Comic Relief", Arial, sans-serif;
+  /* “caixinhas” atrás simuladas com sombra sem blur */
+  box-shadow:-7px 7px 0 #000;    /* desloca a sombra como blocos */
+  position:relative;
+  z-index:1;                     /* evita algo passar por cima */
+}
+
 /* Wizard */
 .step{ display:none; }
 .step.active{ display:block; }
@@ -211,4 +226,5 @@ canvas {
     padding-bottom: calc(14px + env(safe-area-inset-bottom));
   }
 }
+
 
