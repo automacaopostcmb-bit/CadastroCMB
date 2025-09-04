@@ -3,7 +3,7 @@
    ========================================================= */
 const FRAME_URL =
   // Troque pela sua moldura para artistas quando subir no CDN:
-  'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_artistas.png';
+  'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/areaartista.png';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
@@ -414,3 +414,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
