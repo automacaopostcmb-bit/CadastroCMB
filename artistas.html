@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Comic+Relief&display=swap" rel="stylesheet">
 
   <!-- CSS compartilhado -->
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 
   <style>
     .hint { font-size: 12px; color: #666; margin: 4px 0 10px; }
@@ -17,12 +17,10 @@
     .title-label { margin-top: 12px; display:block; font-weight:600; }
     .intro-box p { margin: 6px 0; }
     #avisoTexto { margin: 10px 0; color:#c0392b; display:none; }
-
-    /* wrapper do canvas + overlay */
     .preview-wrap{ position:relative; display:inline-block; }
 
-    /* Plaquinha */
-    .plaquinha {
+    /* (opcional) se você tiver usado .plaquinha em outro lugar da UI */
+    .plaquinha{
       display:inline-block;
       padding:.3em .8em;
       background:#ffd400;
@@ -31,11 +29,8 @@
       color:#111;
       font:700 clamp(24px, 4vw, 46px)/1.1 "Comic Relief", Arial, sans-serif;
       box-shadow:-7px 7px 0 #000;
-      position:relative;
-      z-index:1;
-      white-space: nowrap;   /* 1 linha sempre */
-      text-align: left;      /* alinhado à esquerda */
-      pointer-events: none;  /* NÃO bloqueia cliques nos botões */
+      white-space: nowrap;
+      text-align: left;
     }
   </style>
 </head>
@@ -139,10 +134,6 @@
 
       <div class="preview-wrap">
         <canvas id="canvas" width="1080" height="1350"></canvas>
-        <div id="plaquinhaNome" class="plaquinha" aria-hidden="true"
-             style="position:absolute; left:0; top:0; display:none;">
-          nome
-        </div>
       </div>
       <div id="avisoTexto"></div>
 
@@ -183,7 +174,7 @@
   </main>
 
   <!-- JS desta página -->
-  <script src="app-expo_artistas.js?v=5"></script>
+  <script src="app-expo_artistas.js?v=6"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
