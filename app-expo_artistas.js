@@ -51,8 +51,8 @@ let canvas, ctx, frameImg, fotoImg;
 let fontsReady = false;
 
 // posição da plaquinha no canvas (1080x1350)
-let plaquinhaX = 70;  // + direita
-let plaquinhaY = 900;  // + baixo
+let plaquinhaX = 33;  // + direita
+let plaquinhaY = 955;  // + baixo
 let plaquinhaScale = 0.65; // 1 = 100%, 0.85 = 85%, 1.25 = 125%
 
 /* ===========================
@@ -565,6 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
 
 
 
