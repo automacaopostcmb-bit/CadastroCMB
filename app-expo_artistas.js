@@ -14,14 +14,37 @@ const REVIEW_FIELDS = [
 ];
 
 /* ===========================
+   HELPERS
+   =========================== */
+function showFieldError(inputId, msg) {
+  const box = document.getElementById(inputId + 'Error');
+  const input = document.getElementById(inputId);
+  if (box) { box.textContent = msg || ''; box.style.display = msg ? 'block' : 'none'; }
+  if (input) input.classList.toggle('invalid', !!msg);
+}
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+// Remove invisíveis/espacos e normaliza antes de validar e enviar
+function cleanEmailValue(raw) {
+  let v = (raw || '');
+  if (v.normalize) v = v.normalize('NFKC');
+  v = v.replace(/[\u200B-\u200D\uFEFF\u202A-\u202E\u2066-\u2069]/g, '');
+  v = v.replace(/\s+/g, '');
+  return v;
+}
+
+/* ===========================
    VARS DO CANVAS / PREVIEW
    =========================== */
 let canvas, ctx, frameImg, fotoImg;
 let fontsReady = false;
 
-// Posição da plaquinha (coordenadas do canvas 1080x1350)
-let plaquinhaX = 140;  // esquerda/direita
-let plaquinhaY = 180;  // cima/baixo
+// Posição da plaquinha (coordenadas no canvas 1080x1350)
+let plaquinhaX = 140;  // aumentar = mais à direita
+let plaquinhaY = 180;  // aumentar = mais para baixo
 
 /* ===========================
    CANVAS
@@ -63,7 +86,7 @@ function gerarPost() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // foto base
+  // foto base (ajustável)
   if (fotoImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = canvas.width / 2;
@@ -92,26 +115,20 @@ function gerarPost() {
 /* ===========================
    PLAQUINHA NO CANVAS
    =========================== */
-// Mesmo visual do CSS: fundo amarelo, borda 6px, raio 6px, sombra -7, +7, 1 linha só
+// Visual: fundo amarelo, borda 6px, raio 6px, sombra -7/+7, 1 linha só
 function drawPlaquinhaCanvas(c, text, x, y) {
-  // constantes visuais
-  const PADDING_X = 28;      // ~0.8em
-  const PADDING_Y = 14;      // ~0.3em
+  const PADDING_X = 28;
+  const PADDING_Y = 14;
   const BORDER = 6;
   const RADIUS = 6;
   const SHADOW_X = -7;
   const SHADOW_Y = 7;
-  const MAX_WIDTH = 920;     // limite da área do texto (ajuste se quiser)
+  const MAX_WIDTH = 920;
 
-  // tamanho de fonte: tenta grande e ajusta pra caber em 1 linha
-  let fontSize = 64;         // tamanho base
+  let fontSize = 64;
   c.font = `700 ${fontSize}px "Comic Relief", Arial, sans-serif`;
-  if (!fontsReady) {
-    // evita medir errado antes da fonte carregar
-    c.font = `700 ${fontSize}px Arial, sans-serif`;
-  }
+  if (!fontsReady) c.font = `700 ${fontSize}px Arial, sans-serif`;
 
-  // reduz fonte até o texto caber no MAX_WIDTH
   let textW = c.measureText(text).width;
   while (textW > MAX_WIDTH && fontSize > 16) {
     fontSize -= 2;
@@ -122,12 +139,12 @@ function drawPlaquinhaCanvas(c, text, x, y) {
   const rectW = Math.ceil(textW + PADDING_X * 2);
   const rectH = Math.ceil(fontSize * 1.1 + PADDING_Y * 2);
 
-  // sombra (retângulo atrás, mesmo tamanho do "border-box")
+  // sombra (atrás, com área incluindo borda)
   drawRoundedRect(c, x + SHADOW_X, y + SHADOW_Y, rectW + BORDER * 2, rectH + BORDER * 2, RADIUS);
   c.fillStyle = '#000';
   c.fill();
 
-  // caixa amarela (conteúdo)
+  // caixa amarela
   drawRoundedRect(c, x, y, rectW, rectH, RADIUS);
   c.fillStyle = '#ffd400';
   c.fill();
@@ -137,14 +154,14 @@ function drawPlaquinhaCanvas(c, text, x, y) {
   c.strokeStyle = '#000';
   c.stroke();
 
-  // texto (alinhado à esquerda, 1 linha)
+  // texto
   c.fillStyle = '#111';
   c.textAlign = 'left';
   c.textBaseline = 'top';
   c.fillText(text, x + PADDING_X, y + PADDING_Y);
 }
 
-// utilitário: caminho de retângulo arredondado
+// utilitário: retângulo arredondado
 function drawRoundedRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   c.beginPath();
@@ -200,8 +217,8 @@ async function enviarParaGoogle() {
     if (!v) faltando.push(id);
   });
 
-  const emailArtista = (document.getElementById('emailArtista')?.value || '').trim();
-  const emailAjudante = (document.getElementById('emailAjudante')?.value || '').trim();
+  const emailArtista  = cleanEmailValue(document.getElementById('emailArtista')?.value);
+  const emailAjudante = cleanEmailValue(document.getElementById('emailAjudante')?.value);
 
   const okEmailArtista = EMAIL_REGEX.test(emailArtista);
   showFieldError('emailArtista', okEmailArtista ? '' : 'Informe um e-mail válido.');
@@ -243,11 +260,11 @@ async function enviarParaGoogle() {
 
   const legenda = buildCaptionFromForm();
   const dados = {
-    nomeArtista:   document.getElementById('nomeArtista').value.trim(),
-    emailArtista:  emailArtista,
-    nomeAjudante:  (document.getElementById('nomeAjudante').value || '').trim(),
-    emailAjudante: emailAjudante,
-    biografia:     (document.getElementById('biografia').value || '').trim(),
+    nomeArtista:   (document.getElementById('nomeArtista')?.value || '').trim(),
+    emailArtista,
+    nomeAjudante:  (document.getElementById('nomeAjudante')?.value || '').trim(),
+    emailAjudante,
+    biografia:     (document.getElementById('biografia')?.value || '').trim(),
     legenda,
     comprovante:   comprovanteB64,
     fotoDivulgacao: fotoDivulgB64,
@@ -318,17 +335,23 @@ const REQUIRED_BY_STEP = {
 
 const STEP_VALIDATORS = {
   3: () => {
-    const emailArtista = (document.getElementById('emailArtista').value || '').trim();
-    const okEmailArtista = EMAIL_REGEX.test(emailArtista);
-    showFieldError('emailArtista', okEmailArtista ? '' : 'Informe um e-mail válido.');
+    const nome = (document.getElementById('nomeArtista')?.value || '').trim();
+    const emailArtista  = cleanEmailValue(document.getElementById('emailArtista')?.value);
+    const emailAjudante = cleanEmailValue(document.getElementById('emailAjudante')?.value);
 
-    const emailAjudante = (document.getElementById('emailAjudante').value || '').trim();
-    let okEmailAjudante = true;
-    if (emailAjudante) {
-      okEmailAjudante = EMAIL_REGEX.test(emailAjudante);
-      showFieldError('emailAjudante', okEmailAjudante ? '' : 'E-mail inválido.');
+    showFieldError('emailArtista', '');
+    showFieldError('emailAjudante', '');
+
+    if (!nome) return false;
+    if (!EMAIL_REGEX.test(emailArtista)) {
+      showFieldError('emailArtista', 'Informe um e-mail válido.');
+      return false;
     }
-    return okEmailArtista && okEmailAjudante;
+    if (emailAjudante && !EMAIL_REGEX.test(emailAjudante)) {
+      showFieldError('emailAjudante', 'E-mail inválido.');
+      return false;
+    }
+    return true;
   },
   7: () => { buildReview(); return true; }
 };
@@ -418,6 +441,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
+
+  // revalida em todos os eventos comuns (inclui autofill/colar)
+  ['nomeArtista','emailArtista','emailAjudante'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    ['input','change','blur','keyup'].forEach(evt =>
+      el.addEventListener(evt, () => { if (currentStep === 3) revalidateStepNav(); })
+    );
+  });
 
   document.addEventListener('input', (e) => {
     const activeStep = steps[currentStep - 1];
