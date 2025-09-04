@@ -51,8 +51,9 @@ let canvas, ctx, frameImg, fotoImg;
 let fontsReady = false;
 
 // posição da plaquinha no canvas (1080x1350)
-let plaquinhaX = 140;  // + direita
-let plaquinhaY = 180;  // + baixo
+let plaquinhaX = 100;  // + direita
+let plaquinhaY = 900;  // + baixo
+let plaquinhaScale = 1; // 1 = 100%, 0.85 = 85%, 1.25 = 125%
 
 /* ===========================
    CANVAS
@@ -123,46 +124,64 @@ function gerarPost() {
 /* ===========================
    PLAQUINHA NO CANVAS
    =========================== */
-function drawPlaquinhaCanvas(c, text, x, y) {
-  const PADDING_X = 28;
-  const PADDING_Y = 14;
-  const BORDER = 6;
-  const RADIUS = 6;
-  const SHADOW_X = -7;
-  const SHADOW_Y = 7;
-  const MAX_WIDTH = 940; // limite para não estourar
+function drawPlaquinhaCanvas(c, text, x, y, scale = plaquinhaScale) {
+  const s = scale; // fator de escala
 
-  let fontSize = 64;
+  const PADDING_X = 28 * s;
+  const PADDING_Y = 18 * s;
+  const BORDER    = 6  * s;
+  const RADIUS    = 6  * s;
+  const SHADOW_X  = -7 * s;
+  const SHADOW_Y  = 7  * s;
+  const MAX_WIDTH = 940 * s;
+
+  // fonte + shrink-to-fit
+  let fontSize = 64 * s;
   c.font = `700 ${fontSize}px "Comic Relief", Arial, sans-serif`;
   if (!fontsReady) c.font = `700 ${fontSize}px Arial, sans-serif`;
 
-  let textW = c.measureText(text).width;
-  while (textW > MAX_WIDTH && fontSize > 16) {
-    fontSize -= 2;
+  let metrics = c.measureText(text);
+  while (metrics.width > MAX_WIDTH && fontSize > 16 * s) {
+    fontSize -= 2; // passo fixo em px
     c.font = `700 ${fontSize}px "Comic Relief", Arial, sans-serif`;
-    textW = c.measureText(text).width;
+    metrics = c.measureText(text);
   }
 
-  const rectW = Math.ceil(textW + PADDING_X * 2);
-  const rectH = Math.ceil(fontSize * 1.1 + PADDING_Y * 2);
+  const ascent  = metrics.actualBoundingBoxAscent  ?? fontSize * 0.8;
+  const descent = metrics.actualBoundingBoxDescent ?? fontSize * 0.2;
+  const textH   = ascent + descent;
 
-  // sombra
-  drawRoundedRect(c, x + SHADOW_X, y + SHADOW_Y, rectW + BORDER * 2, rectH + BORDER * 2, RADIUS);
+  const rectW = Math.ceil(metrics.width + PADDING_X * 2);
+  const rectH = Math.ceil(textH + PADDING_Y * 2);
+
+  // sombra “blocada”
+  drawRoundedRect(c, x + SHADOW_X, y + SHADOW_Y,
+                  rectW + BORDER * 2, rectH + BORDER * 2, RADIUS);
   c.fillStyle = '#000'; c.fill();
 
   // caixa amarela
   drawRoundedRect(c, x, y, rectW, rectH, RADIUS);
   c.fillStyle = '#ffd400'; c.fill();
 
-  // borda
-  c.lineWidth = BORDER; c.strokeStyle = '#000'; c.stroke();
+  // contorno
+  c.lineWidth = BORDER;
+  c.strokeStyle = '#000';
+  c.stroke();
 
-  // texto
+  // texto centralizado verticalmente
   c.fillStyle = '#111';
   c.textAlign = 'left';
-  c.textBaseline = 'top';
-  c.fillText(text, x + PADDING_X, y + PADDING_Y);
+  c.textBaseline = 'alphabetic';
+  const textX = x + PADDING_X;
+  const textY = y + (rectH - textH) / 2 + ascent;
+  c.fillText(text, textX, textY);
 }
+
+
+/* ====================================================== */
+
+
+
 function drawRoundedRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
   c.beginPath();
@@ -546,6 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
 
 
 
