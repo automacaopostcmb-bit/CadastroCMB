@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cadastro – Área dos Artistas (CMB)</title>
+
+  <!-- Fonte usada no canvas -->
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Relief&display=swap" rel="stylesheet">
+
+  <!-- CSS compartilhado -->
+  <link rel="stylesheet" href="style.css?v=10">
+
+  <style>
+    /* Ajustes leves específicos (pode mover para style.css) */
+    .hint { font-size: 12px; color: #666; margin: 4px 0 10px; }
+    .inline-error { color:#d33; display:none; font-size:12px; margin:4px 0 8px; }
+    .title-label { margin-top: 12px; display:block; font-weight:600; }
+    .intro-box p { margin: 6px 0; }
+    #avisoTexto { margin: 10px 0; color:#c0392b; display:none; }
+  </style>
+</head>
+
+<body>
+  <main class="page-center">
+    <a class="link-voltar" id="link-topo" href="index.html?back=1">Voltar/Menu</a>
+    <div id="wizard-indicator">Etapa 1 de 7</div>
+
+    <!-- ========== ETAPA 1 ========== -->
+    <section class="step active" id="step1">
+      <div class="faixa-secao"><span>Boas-vindas</span></div>
+      <div id="intro-content" class="intro-box">
+        <h2>Cadastro para Mesas da Área dos Artistas 🎨</h2>
+        <p>Preencha seus dados, envie os arquivos necessários e no final você poderá baixar uma imagem de divulgação com seu nome.</p>
+        <p>Clique em <strong>Próximo</strong> para começar!</p>
+      </div>
+      <div class="button-row">
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 2 ========== -->
+    <section class="step" id="step2">
+      <div class="faixa-secao"><span>Comprovante de Pagamento*</span></div>
+
+      <label class="title-label">Envie a foto do comprovante*</label>
+      <div class="hint">(JPG/PNG ou screenshot nítido)</div>
+      <input type="file" id="comprovante" accept="image/*" />
+      <div id="comprovanteError" class="inline-error"></div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 3 ========== -->
+    <section class="step" id="step3">
+      <div class="faixa-secao"><span>Seus dados</span></div>
+
+      <label class="title-label">Nome do artista*</label>
+      <input type="text" id="nomeArtista" />
+
+      <label class="title-label">E-mail do artista*</label>
+      <input type="email" id="emailArtista" placeholder="voce@email.com" />
+      <div id="emailArtistaError" class="inline-error"></div>
+
+      <label class="title-label">Nome do ajudante (opcional)</label>
+      <input type="text" id="nomeAjudante" />
+
+      <label class="title-label">E-mail do ajudante (opcional)</label>
+      <input type="email" id="emailAjudante" placeholder="ajudante@email.com" />
+      <div id="emailAjudanteError" class="inline-error"></div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 4 ========== -->
+    <section class="step" id="step4">
+      <div class="faixa-secao"><span>Sua biografia*</span></div>
+
+      <label class="title-label">Biografia*</label>
+      <div class="hint">(Sem limite – escreva à vontade)</div>
+      <textarea id="biografia" rows="8" placeholder="Conte sobre você, trabalhos, publicações, estilo, etc."></textarea>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 5 ========== -->
+    <section class="step" id="step5">
+      <div class="faixa-secao"><span>Foto/Arte de divulgação*</span></div>
+
+      <label class="title-label">Envie sua foto ou arte de divulgação*</label>
+      <div class="hint">(Essa imagem será usada no preview para gerar seu post de divulgação)</div>
+      <input type="file" id="fotoDivulgacao" accept="image/*" />
+      <div id="fotoDivulgacaoError" class="inline-error"></div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 6 ========== -->
+    <section class="step" id="step6">
+      <div class="faixa-secao"><span>Preview da sua divulgação</span></div>
+
+      <label class="title-label">Tamanho</label>
+      <input type="range" id="imgScale" min="0.1" max="2" step="0.01" value="1" />
+      <label class="title-label">Mover horizontalmente</label>
+      <input type="range" id="imgX" min="-500" max="500" value="0" />
+      <label class="title-label">Mover verticalmente</label>
+      <input type="range" id="imgY" min="-500" max="500" value="0" />
+
+      <canvas id="canvas" width="1080" height="1350"></canvas>
+      <div id="avisoTexto"></div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 7 ========== -->
+    <section class="step" id="step7">
+      <div class="faixa-secao"><span>Revise seus dados</span></div>
+      <div id="review-list" class="review-box"></div>
+      <div id="mensagem"></div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" id="botao-enviar" onclick="enviarParaGoogle()">Enviar informações</button>
+      </div>
+    </section>
+
+    <!-- FINAL -->
+    <section id="final-screen" class="final-screen">
+      <div class="final-card">
+        <h2>✅ Enviado com sucesso!</h2>
+        <p>Obrigado! Você já pode baixar a imagem de divulgação.</p>
+        <button class="btn-download" id="btn-final-download" onclick="baixarImagem()">Baixar Imagem</button>
+        <button class="btn-menu" id="btn-menu" onclick="goToMenu()">Menu</button>
+      </div>
+    </section>
+
+    <div id="overlay">
+      <div class="loader">
+        <img src="assets/loading.gif" alt="Carregando" class="loader-gif">
+        <div class="loader-text">Enviando...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- JS desta página -->
+  <script src="app-expo_artistas.js?v=1"></script>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <strong>Criado por Bruno Lima • </strong>
+      <a href="mailto:limasketch@gmail.com">Implemente no seu evento.</a>
+      <small>© 2025 Automatic Post. Todos os direitos reservados.</small>
+    </div>
+  </footer>
+</body>
+</html>
