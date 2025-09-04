@@ -5,7 +5,8 @@ const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@
 
 /* URL do Web App (mesmo arquivo Apps Script abaixo, que tem doGet + doPost).
    Depois de "Deploy > Web app", copie a URL ".../exec" e cole aqui: */
-const WEBAPP_URL = 'PASTE_YOUR_DEPLOYED_WEBAPP_EXEC_URL_HERE'; // <<< SUBSTITUIR APÓS DEPLOY
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyMbkkFdzYC_BfMsi5WKW6xbOKdjbNbW635vovOLYHGXdso2S_1a2Wdfvur790y0BM46g/exec";
+
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
@@ -424,3 +425,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
