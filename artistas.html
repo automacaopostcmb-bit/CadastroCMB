@@ -19,7 +19,7 @@
     #avisoTexto { margin: 10px 0; color:#c0392b; display:none; }
     .preview-wrap{ position:relative; display:inline-block; }
 
-    /* (opcional) se você tiver usado .plaquinha em outro lugar da UI */
+    /* (opcional) .plaquinha para usar em outras telas */
     .plaquinha{
       display:inline-block;
       padding:.3em .8em;
@@ -76,14 +76,18 @@
       <input type="text" id="nomeArtista" />
 
       <label class="title-label">E-mail do artista*</label>
-      <input type="email" id="emailArtista" placeholder="voce@email.com" />
+      <input type="email" id="emailArtista" placeholder="voce@email.com"
+             autocomplete="email" autocapitalize="off" autocorrect="off"
+             spellcheck="false" inputmode="email" />
       <div id="emailArtistaError" class="inline-error"></div>
 
       <label class="title-label">Nome do ajudante (opcional)</label>
       <input type="text" id="nomeAjudante" />
 
       <label class="title-label">E-mail do ajudante (opcional)</label>
-      <input type="email" id="emailAjudante" placeholder="ajudante@email.com" />
+      <input type="email" id="emailAjudante" placeholder="ajudante@email.com"
+             autocomplete="email" autocapitalize="off" autocorrect="off"
+             spellcheck="false" inputmode="email" />
       <div id="emailAjudanteError" class="inline-error"></div>
 
       <div class="button-row">
@@ -174,7 +178,7 @@
   </main>
 
   <!-- JS desta página -->
-  <script src="app-expo_artistas.js?v=6"></script>
+  <script src="app-expo_artistas.js?v=7"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
