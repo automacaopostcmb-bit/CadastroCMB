@@ -14,7 +14,7 @@ const REVIEW_FIELDS = [
   { id: 'telefoneArtista', label: 'Telefone do artista' },
   { id: 'nomeAjudante',    label: 'Nome do ajudante' },
   { id: 'emailAjudante',   label: 'E-mail do ajudante' },
-  { id: 'observacao',     label: 'Observação' },
+  { id: 'observacao',      label: 'Observação' },
 ];
 
 /* ===========================
@@ -51,7 +51,7 @@ let canvas, ctx, frameImg, fotoImg;
 let fontsReady = false;
 
 // posição da plaquinha no canvas (1080x1350)
-let plaquinhaX = 33;  // + direita
+let plaquinhaX = 33;   // + direita
 let plaquinhaY = 955;  // + baixo
 let plaquinhaScale = 0.65; // 1 = 100%, 0.85 = 85%, 1.25 = 125%
 
@@ -125,7 +125,7 @@ function gerarPost() {
    PLAQUINHA NO CANVAS
    =========================== */
 function drawPlaquinhaCanvas(c, text, x, y, scale = plaquinhaScale) {
-  const s = scale; // fator de escala
+  const s = scale;
 
   const PADDING_X = 28 * s;
   const PADDING_Y = 18 * s;
@@ -142,7 +142,7 @@ function drawPlaquinhaCanvas(c, text, x, y, scale = plaquinhaScale) {
 
   let metrics = c.measureText(text);
   while (metrics.width > MAX_WIDTH && fontSize > 16 * s) {
-    fontSize -= 2; // passo fixo em px
+    fontSize -= 2;
     c.font = `700 ${fontSize}px "Comic Relief", Arial, sans-serif`;
     metrics = c.measureText(text);
   }
@@ -176,11 +176,6 @@ function drawPlaquinhaCanvas(c, text, x, y, scale = plaquinhaScale) {
   const textY = y + (rectH - textH) / 2 + ascent;
   c.fillText(text, textX, textY);
 }
-
-
-/* ====================================================== */
-
-
 
 function drawRoundedRect(c, x, y, w, h, r) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -230,6 +225,43 @@ function buildCaptionFromForm() {
 
   const corpo = bio ? `${nomeArtistico ? nomeArtistico + ' — ' : ''}${bio}` : (nomeArtistico || '');
   return [head, '', corpo, '', place, date, '', tickets, '', tags].join('\n');
+}
+
+/* ======= COMPARTILHAMENTO NATIVO (Web Share) ======= */
+function getCaptionText() {
+  return (document.getElementById('captionBox')?.value || '').trim();
+}
+function getCanvasBlob() {
+  return new Promise((resolve) => {
+    if (!canvas) return resolve(null);
+    canvas.toBlob((blob) => resolve(blob), 'image/png');
+  });
+}
+async function shareNative() {
+  try {
+    const text = getCaptionText() || 'Comic Market Brasil';
+    const blob = await getCanvasBlob();
+
+    // Tenta com imagem + texto
+    if (blob && window.File && navigator.canShare) {
+      const file = new File([blob], 'cmb-divulgacao.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ text, files: [file] });
+        return;
+      }
+    }
+    // Só texto
+    if (navigator.share) {
+      await navigator.share({ text });
+      return;
+    }
+    // Fallback: copia o texto
+    await navigator.clipboard.writeText(text).catch(()=>{});
+    alert('Seu navegador não suporta compartilhamento direto. O texto foi copiado; anexe a imagem baixada no app que preferir.');
+  } catch (e) {
+    console.error(e);
+    alert('Não foi possível abrir o compartilhamento agora. Tente o botão Copiar.');
+  }
 }
 
 /* ===========================
@@ -291,30 +323,25 @@ async function enviarParaGoogle() {
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
-const legenda = buildCaptionFromForm();
+  const legenda = buildCaptionFromForm();
 
-// ⬇️ NOVO: pega o texto da observação (ou vazio)
-const obs = (document.getElementById('observacao')?.value || '').trim();
+  // Observação (opcional)
+  const obs = (document.getElementById('observacao')?.value || '').trim();
 
-const dados = {
-  nomeCompleto:   (document.getElementById('nomeCompleto')?.value || '').trim(),
-  nomeArtistico:  (document.getElementById('nomeArtistico')?.value || '').trim(),
-  emailArtista,
-  telefoneArtista: telNorm,
-  nomeAjudante:    (document.getElementById('nomeAjudante')?.value || '').trim(),
-  emailAjudante,
-  biografia:       (document.getElementById('biografia')?.value || '').trim(),
-  legenda,
-  comprovante:     comprovanteB64,
-  fotoDivulgacao:  fotoDivulgB64,
-  preview:         previewBase64
-};
-
-// ⬇️ NOVO: só envia “observacao” se o usuário escreveu algo
-if (obs) {
-  dados.observacao = obs;
-}
-
+  const dados = {
+    nomeCompleto:   (document.getElementById('nomeCompleto')?.value || '').trim(),
+    nomeArtistico:  (document.getElementById('nomeArtistico')?.value || '').trim(),
+    emailArtista,
+    telefoneArtista: telNorm,
+    nomeAjudante:    (document.getElementById('nomeAjudante')?.value || '').trim(),
+    emailAjudante,
+    biografia:       (document.getElementById('biografia')?.value || '').trim(),
+    legenda,
+    comprovante:     comprovanteB64,
+    fotoDivulgacao:  fotoDivulgB64,
+    preview:         previewBase64
+  };
+  if (obs) dados.observacao = obs;
 
   const overlay = document.getElementById('overlay');
   overlay.style.display = 'flex';
@@ -526,8 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nomeAj || emailAj) {
           const ok = confirm(
             '⚠️ Atenção!\n\n' +
-            'Tenha certeza que o seu ajudante já se cadastrou no site de compra de ingressos do CMB usando este mesmo e-mail que você acabou de informar. \n'+
-            'Ele apenas precisa apenas fazer o cadastro.'
+            'Tenha certeza de que o seu ajudante já se cadastrou no site de compra de ingressos do CMB usando este mesmo e-mail que você acabou de informar.\n' +
+            'Ele só precisa realizar o cadastro.'
           );
           if (!ok) return; // não avança se cancelar
         }
@@ -558,6 +585,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // botão Compartilhar (Web Share)
+  const btnShare = document.getElementById('btnShareNative');
+  if (btnShare) btnShare.addEventListener('click', shareNative);
+
   showStep(1);
 });
 
@@ -565,12 +596,3 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
-
-
-
-
-
-
-
-
-
