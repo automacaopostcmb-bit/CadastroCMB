@@ -149,7 +149,7 @@ function wrapText(context, text, maxWidth) {
 
 function baixarImagem() {
   const link = document.createElement('a');
-  link.download = 'post_artista.png';
+  link.download = 'post_CMB_artista.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
@@ -414,4 +414,5 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
 
