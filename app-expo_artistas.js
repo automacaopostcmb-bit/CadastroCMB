@@ -3,7 +3,7 @@
    ========================================================= */
 const FRAME_URL =
   // Troque pela sua moldura para artistas quando subir no CDN:
-  'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/areaartista.png';
+  'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_artistas.png';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
@@ -149,7 +149,7 @@ function wrapText(context, text, maxWidth) {
 
 function baixarImagem() {
   const link = document.createElement('a');
-  link.download = 'post_CMB_artista.png';
+  link.download = 'post_artista.png';
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
@@ -414,5 +414,3 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
-
-
