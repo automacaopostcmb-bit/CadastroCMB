@@ -7,7 +7,6 @@ const FRAME_URL = 'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@
    Depois de "Deploy > Web app", copie a URL ".../exec" e cole aqui: */
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyAIRNSN5yaoSIKzxgf5rnme1ryxveWHmePMC6qRDtrkso3pZtQ-7iMW4pi94LbW1uS/exec";
 
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
 const REVIEW_FIELDS = [
@@ -76,18 +75,11 @@ function initCanvas() {
     document.getElementById(id)?.addEventListener('input', gerarPost);
   });
 
-document.fonts?.ready?.then(() => { gerarPost(); updatePlaquinha(); });
-
+  // quando as fontes estiverem prontas, renderiza e posiciona a plaquinha
+  document.fonts?.ready?.then(() => { gerarPost(); updatePlaquinha(); });
 }
 
-/* ---- desenho ---- */
-function gerarPost() {
-  if (!ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-   
-/* ---- plaquinha ---- */
+/* ---- PLAQUINHA (overlay HTML) ---- */
 function updatePlaquinha() {
   const tag = document.getElementById('plaquinhaNome');
   if (!tag || !canvas) return;
@@ -95,22 +87,27 @@ function updatePlaquinha() {
   const nome = (document.getElementById('nomeArtista')?.value || '').trim();
   if (!nome) { tag.style.display = 'none'; return; }
 
-  // Mostra + texto
+  // Mostra + texto da plaquinha
   tag.textContent = nome;
   tag.style.display = 'inline-block';
 
-  // Mantém alinhado ao centro do canvas e na altura ~180px do layout original
+  // Alinha ao centro e altura ~180px (coordenada do canvas)
   const scale = canvas.clientWidth / canvas.width; // ex.: 500 / 1080
   const centerX = canvas.clientWidth / 2;
-  const yCanvas = 180; // Y usado antes no canvas
+  const yCanvas = 180;
 
   tag.style.left = centerX + 'px';
   tag.style.top  = (yCanvas * scale) + 'px';
   tag.style.transform = `translateX(-50%) scale(${scale})`;
 }
 
+/* ---- desenho do preview no canvas ---- */
+function gerarPost() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-   
   // foto base (ajustável)
   if (fotoImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
@@ -129,13 +126,14 @@ function updatePlaquinha() {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  // Nome do artista (topo)
- updatePlaquinha(); // atualiza o overlay HTML com o nome
+  // Nome do artista agora é overlay HTML
+  updatePlaquinha();
 
   const aviso = document.getElementById('avisoTexto');
   if (aviso) { aviso.textContent = ''; aviso.style.display = 'none'; }
 }
 
+/* (Mantidas — podem ser usadas para outros textos se precisar) */
 function drawTextWithStrokeWrap(context, text, centerX, baseY, maxWidth, maxLines, lineHeight) {
   const lines = wrapText(context, text, maxWidth);
   const used = lines.slice(0, maxLines);
@@ -145,7 +143,6 @@ function drawTextWithStrokeWrap(context, text, centerX, baseY, maxWidth, maxLine
     context.fillText(linha, centerX, y);
   });
 }
-
 function wrapText(context, text, maxWidth) {
   const words = text.split(' ');
   const lines = [];
@@ -183,7 +180,6 @@ function buildCaptionFromForm() {
   const tickets = `🎟️ Mais informações e ingressos:\ncomicmarketbrasil.com.br`;
   const tags = `#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom`;
 
-  // Coloco o nome antes da bio para personalizar
   const corpo = bio ? `${nome ? nome + ' — ' : ''}${bio}` : (nome || '');
   return [head, '', corpo, '', place, date, '', tickets, '', tags].join('\n');
 }
@@ -381,23 +377,6 @@ function showStep(n) {
   revalidateStepNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function buildReview() {
-  const box = document.getElementById('review-list');
-  if (!box) return;
-  const parts = REVIEW_FIELDS.map(({ id, label }) => {
-    const el = document.getElementById(id);
-    let val = '';
-    if (el) val = (el.value || '').trim();
-    if (!val) val = '—';
-    return `
-      <div class="review-item">
-        <span class="review-label">${label}:</span>
-        <div class="review-value">${escapeHtml(val)}</div>
-      </div>
-    `;
-  });
-  box.innerHTML = parts.join('');
-}
 
 /* ===========================
    MENU
@@ -410,7 +389,6 @@ function goToMenu() {
 /* ===========================
    BOOTSTRAP
    =========================== */
-
 window.addEventListener('resize', updatePlaquinha);
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -445,6 +423,3 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
-
-
-
