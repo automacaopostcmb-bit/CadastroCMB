@@ -14,41 +14,17 @@ const REVIEW_FIELDS = [
 ];
 
 /* ===========================
-   HELPERS
-   =========================== */
-function showFieldError(inputId, msg) {
-  const box = document.getElementById(inputId + 'Error');
-  const input = document.getElementById(inputId);
-  if (box) { box.textContent = msg || ''; box.style.display = msg ? 'block' : 'none'; }
-  if (input) input.classList.toggle('invalid', !!msg);
-}
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-}
-function loadImage(src) {
-  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now();
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src + bust;
-  });
-}
-
-/* ===========================
    VARS DO CANVAS / PREVIEW
    =========================== */
 let canvas, ctx, frameImg, fotoImg;
+let fontsReady = false;
 
-// Posição inicial da plaquinha (em px no canvas 1080x1350)
-let plaquinhaX = 140;
-let plaquinhaY = 1000;
+// Posição da plaquinha (coordenadas do canvas 1080x1350)
+let plaquinhaX = 140;  // esquerda/direita
+let plaquinhaY = 180;  // cima/baixo
 
 /* ===========================
-   CANVAS + PLAQUINHA
+   CANVAS
    =========================== */
 function initCanvas() {
   canvas = document.getElementById('canvas');
@@ -65,11 +41,7 @@ function initCanvas() {
   const fotoInput = document.getElementById('fotoDivulgacao');
   fotoInput?.addEventListener('change', (e) => {
     const r = new FileReader();
-    r.onload = (ev) => {
-      fotoImg = new Image();
-      fotoImg.onload = gerarPost;
-      fotoImg.src = ev.target.result;
-    };
+    r.onload = (ev) => { fotoImg = new Image(); fotoImg.onload = gerarPost; fotoImg.src = ev.target.result; };
     if (e.target.files && e.target.files[0]) r.readAsDataURL(e.target.files[0]);
   });
 
@@ -77,42 +49,21 @@ function initCanvas() {
     document.getElementById(id)?.addEventListener('input', gerarPost);
   });
 
-  document.fonts?.ready?.then(() => {
-    gerarPost();
-    updatePlaquinha();
-  });
-
-  // Atualiza posição/escala no resize
-  window.addEventListener('resize', updatePlaquinha);
-}
-
-/* ---- PLAQUINHA (overlay HTML) ---- */
-function updatePlaquinha() {
-  const tag = document.getElementById('plaquinhaNome');
-  if (!tag || !canvas) return;
-
-  const nome = (document.getElementById('nomeArtista')?.value || '').trim();
-  if (!nome) { tag.style.display = 'none'; return; }
-
-  tag.textContent = nome;
-  tag.style.display = 'inline-block';
-
-  const scale = canvas.clientWidth / canvas.width; // ex.: 500/1080
-  tag.style.left = (plaquinhaX * scale) + 'px';
-  tag.style.top  = (plaquinhaY * scale) + 'px';
-  tag.style.transformOrigin = 'top left';
-  tag.style.transform = `scale(${scale})`;
+  document.fonts?.ready?.then(() => { fontsReady = true; gerarPost(); });
 }
 
 /* ===========================
-   DESENHO NO CANVAS
+   DESENHO
    =========================== */
 function gerarPost() {
   if (!ctx) return;
+
+  // fundo branco
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // foto base
   if (fotoImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = canvas.width / 2;
@@ -125,16 +76,93 @@ function gerarPost() {
     ctx.drawImage(fotoImg, drawX, drawY, w, h);
   }
 
+  // frame
   if (frameImg?.complete && frameImg.naturalWidth) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  updatePlaquinha();
+  // plaquinha no canvas
+  const nome = (document.getElementById('nomeArtista')?.value || '').trim();
+  if (nome) drawPlaquinhaCanvas(ctx, nome, plaquinhaX, plaquinhaY);
 
   const aviso = document.getElementById('avisoTexto');
   if (aviso) { aviso.textContent = ''; aviso.style.display = 'none'; }
 }
 
+/* ===========================
+   PLAQUINHA NO CANVAS
+   =========================== */
+// Mesmo visual do CSS: fundo amarelo, borda 6px, raio 6px, sombra -7, +7, 1 linha só
+function drawPlaquinhaCanvas(c, text, x, y) {
+  // constantes visuais
+  const PADDING_X = 28;      // ~0.8em
+  const PADDING_Y = 14;      // ~0.3em
+  const BORDER = 6;
+  const RADIUS = 6;
+  const SHADOW_X = -7;
+  const SHADOW_Y = 7;
+  const MAX_WIDTH = 920;     // limite da área do texto (ajuste se quiser)
+
+  // tamanho de fonte: tenta grande e ajusta pra caber em 1 linha
+  let fontSize = 64;         // tamanho base
+  c.font = `700 ${fontSize}px "Comic Relief", Arial, sans-serif`;
+  if (!fontsReady) {
+    // evita medir errado antes da fonte carregar
+    c.font = `700 ${fontSize}px Arial, sans-serif`;
+  }
+
+  // reduz fonte até o texto caber no MAX_WIDTH
+  let textW = c.measureText(text).width;
+  while (textW > MAX_WIDTH && fontSize > 16) {
+    fontSize -= 2;
+    c.font = `700 ${fontSize}px "Comic Relief", Arial, sans-serif`;
+    textW = c.measureText(text).width;
+  }
+
+  const rectW = Math.ceil(textW + PADDING_X * 2);
+  const rectH = Math.ceil(fontSize * 1.1 + PADDING_Y * 2);
+
+  // sombra (retângulo atrás, mesmo tamanho do "border-box")
+  drawRoundedRect(c, x + SHADOW_X, y + SHADOW_Y, rectW + BORDER * 2, rectH + BORDER * 2, RADIUS);
+  c.fillStyle = '#000';
+  c.fill();
+
+  // caixa amarela (conteúdo)
+  drawRoundedRect(c, x, y, rectW, rectH, RADIUS);
+  c.fillStyle = '#ffd400';
+  c.fill();
+
+  // borda preta
+  c.lineWidth = BORDER;
+  c.strokeStyle = '#000';
+  c.stroke();
+
+  // texto (alinhado à esquerda, 1 linha)
+  c.fillStyle = '#111';
+  c.textAlign = 'left';
+  c.textBaseline = 'top';
+  c.fillText(text, x + PADDING_X, y + PADDING_Y);
+}
+
+// utilitário: caminho de retângulo arredondado
+function drawRoundedRect(c, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + rr, y);
+  c.lineTo(x + w - rr, y);
+  c.quadraticCurveTo(x + w, y, x + w, y + rr);
+  c.lineTo(x + w, y + h - rr);
+  c.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+  c.lineTo(x + rr, y + h);
+  c.quadraticCurveTo(x, y + h, x, y + h - rr);
+  c.lineTo(x, y + rr);
+  c.quadraticCurveTo(x, y, x + rr, y);
+  c.closePath();
+}
+
+/* ===========================
+   DOWNLOAD
+   =========================== */
 function baixarImagem() {
   const link = document.createElement('a');
   link.download = 'post_artista.png';
@@ -269,21 +297,10 @@ const PAGINA = 'expo_artistas';
 async function checkAuth() {
   const chave = (localStorage.getItem('chave') || '').trim();
   if (!chave) { alert('Faça login primeiro.'); window.location.href = 'index.html'; return; }
-
   const url = `${WEBAPP_URL}?chave=${encodeURIComponent(chave)}&pagina=${encodeURIComponent(PAGINA)}&v=${Date.now()}`;
-  try {
-    const resp = await fetch(url);
-    const data = await resp.json();
-    // console.log('[checkAuth]', data);
-    if (!data.permitido) {
-      alert('Você não tem permissão para acessar esta página.');
-      window.location.href = 'index.html';
-    }
-  } catch (err) {
-    console.error('Erro checkAuth', err);
-    const msg = document.getElementById('mensagem');
-    if (msg) { msg.style.display = 'block'; msg.style.color = 'red'; msg.textContent = 'Erro de autenticação. Verifique sua conexão.'; }
-  }
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (!data.permitido) { alert('Você não tem permissão para acessar esta página.'); window.location.href = 'index.html'; }
 }
 
 /* ===========================
@@ -357,7 +374,7 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-  if (currentStep === 6) { try { gerarPost(); updatePlaquinha(); } catch(e) {} }
+  if (currentStep === 6) { try { gerarPost(); } catch(e) {} }
   if (currentStep === 7) { try { buildReview(); } catch(e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
@@ -420,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showStep(1);
 });
 
-/* Expor funções globais (usadas no HTML) */
+/* Expor funções globais */
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
