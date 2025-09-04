@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Comic+Relief&display=swap" rel="stylesheet">
 
   <!-- CSS compartilhado -->
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=15">
 
   <style>
     .hint { font-size: 12px; color: #666; margin: 4px 0 10px; }
@@ -19,7 +19,7 @@
     #avisoTexto { margin: 10px 0; color:#c0392b; display:none; }
     .preview-wrap{ position:relative; display:inline-block; }
 
-    /* (opcional) .plaquinha para usar em outras telas */
+    /* opcional – para uso fora do canvas */
     .plaquinha{
       display:inline-block;
       padding:.3em .8em;
@@ -32,20 +32,30 @@
       white-space: nowrap;
       text-align: left;
     }
+
+    /* Final: caixa da legenda */
+    .caption-wrap{
+      max-width:720px; margin:16px auto 0; display:none;
+      background:#fff; border:1px solid #d9e7ff; border-radius:12px;
+      padding:16px; box-shadow:0 6px 14px rgba(0,0,0,.04);
+    }
+    .caption-wrap h3{ margin:0 0 8px; font-size:18px; text-align:center; }
+    .caption-wrap textarea{ width:100%; min-height:140px; font-size:15px; padding:10px; }
+    .btn-copy{ margin-top:10px; width:180px; padding:10px 14px; border:none; border-radius:6px; background:#4dafff; color:#fff; font-weight:600; cursor:pointer; }
   </style>
 </head>
 
 <body>
   <main class="page-center">
     <a class="link-voltar" id="link-topo" href="index.html?back=1">Voltar/Menu</a>
-    <div id="wizard-indicator">Etapa 1 de 7</div>
+    <div id="wizard-indicator">Etapa 1 de 8</div>
 
     <!-- ========== ETAPA 1 ========== -->
     <section class="step active" id="step1">
       <div class="faixa-secao"><span>Boas-vindas</span></div>
       <div id="intro-content" class="intro-box">
         <h2>Cadastro para Mesas da Área dos Artistas 🎨</h2>
-        <p>Preencha seus dados, envie os arquivos necessários e no final você poderá baixar uma imagem de divulgação com seu nome.</p>
+        <p>Preencha seus dados, envie os arquivos necessários e no final você poderá baixar uma imagem de divulgação com seu nome artístico.</p>
         <p>Clique em <strong>Próximo</strong> para começar!</p>
       </div>
       <div class="button-row">
@@ -70,10 +80,13 @@
 
     <!-- ========== ETAPA 3 ========== -->
     <section class="step" id="step3">
-      <div class="faixa-secao"><span>Seus dados</span></div>
+      <div class="faixa-secao"><span>Dados do Artista</span></div>
 
-      <label class="title-label">Nome do artista*</label>
-      <input type="text" id="nomeArtista" />
+      <label class="title-label">Nome completo*</label>
+      <input type="text" id="nomeCompleto" />
+
+      <label class="title-label">Nome artístico* (vai na plaquinha)</label>
+      <input type="text" id="nomeArtistico" />
 
       <label class="title-label">E-mail do artista*</label>
       <input type="email" id="emailArtista" placeholder="voce@email.com"
@@ -81,10 +94,24 @@
              spellcheck="false" inputmode="email" />
       <div id="emailArtistaError" class="inline-error"></div>
 
-      <label class="title-label">Nome do ajudante (opcional)</label>
+      <label class="title-label">Telefone do artista*</label>
+      <input type="tel" id="telefoneArtista" placeholder="(11) 99999-9999" inputmode="tel" />
+      <div id="telefoneArtistaError" class="inline-error"></div>
+
+      <div class="button-row">
+        <button class="btn-nav btn-voltar" data-prev>Voltar</button>
+        <button class="btn-nav btn-proximo" data-next>Próximo</button>
+      </div>
+    </section>
+
+    <!-- ========== ETAPA 4 ========== -->
+    <section class="step" id="step4">
+      <div class="faixa-secao"><span>Dados do Ajudante (opcional)</span></div>
+
+      <label class="title-label">Nome do ajudante</label>
       <input type="text" id="nomeAjudante" />
 
-      <label class="title-label">E-mail do ajudante (opcional)</label>
+      <label class="title-label">E-mail do ajudante</label>
       <input type="email" id="emailAjudante" placeholder="ajudante@email.com"
              autocomplete="email" autocapitalize="off" autocorrect="off"
              spellcheck="false" inputmode="email" />
@@ -96,8 +123,8 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 4 ========== -->
-    <section class="step" id="step4">
+    <!-- ========== ETAPA 5 ========== -->
+    <section class="step" id="step5">
       <div class="faixa-secao"><span>Sua biografia*</span></div>
 
       <label class="title-label">Biografia*</label>
@@ -110,8 +137,8 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 5 ========== -->
-    <section class="step" id="step5">
+    <!-- ========== ETAPA 6 ========== -->
+    <section class="step" id="step6">
       <div class="faixa-secao"><span>Foto/Arte de divulgação*</span></div>
 
       <label class="title-label">Envie sua foto ou arte de divulgação*</label>
@@ -125,8 +152,8 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 6 ========== -->
-    <section class="step" id="step6">
+    <!-- ========== ETAPA 7 ========== -->
+    <section class="step" id="step7">
       <div class="faixa-secao"><span>Preview da sua divulgação</span></div>
 
       <label class="title-label">Tamanho</label>
@@ -147,8 +174,8 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 7 ========== -->
-    <section class="step" id="step7">
+    <!-- ========== ETAPA 8 ========== -->
+    <section class="step" id="step8">
       <div class="faixa-secao"><span>Revise seus dados</span></div>
       <div id="review-list" class="review-box"></div>
       <div id="mensagem"></div>
@@ -165,6 +192,16 @@
         <h2>✅ Enviado com sucesso!</h2>
         <p>Obrigado! Você já pode baixar a imagem de divulgação.</p>
         <button class="btn-download" id="btn-final-download" onclick="baixarImagem()">Baixar Imagem</button>
+
+        <!-- NOVO: Descrição para redes sociais (aparece após baixar) -->
+        <div id="captionWrap" class="caption-wrap">
+          <h3>Descrição para redes sociais</h3>
+          <textarea id="captionBox"></textarea>
+          <div style="text-align:center">
+            <button class="btn-copy" id="btnCopyCaption" type="button">Copiar</button>
+          </div>
+        </div>
+
         <button class="btn-menu" id="btn-menu" onclick="goToMenu()">Menu</button>
       </div>
     </section>
@@ -178,7 +215,7 @@
   </main>
 
   <!-- JS desta página -->
-  <script src="app-expo_artistas.js?v=7"></script>
+  <script src="app-expo_artistas.js?v=8"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
