@@ -13,7 +13,7 @@ const REVIEW_FIELDS = [
   { id: 'emailArtista',    label: 'E-mail do artista' },
   { id: 'telefoneArtista', label: 'Telefone do artista' },
   { id: 'nomeAjudante',    label: 'Nome do ajudante' },
-  { id: 'emailAjudante',   label: 'E-mail do ajudante' }
+  { id: 'emailAjudante',   label: 'E-mail do ajudante' },
   { id: 'observacao',     label: 'Observação' },
 ];
 
@@ -546,4 +546,5 @@ document.addEventListener('DOMContentLoaded', () => {
 window.enviarParaGoogle = enviarParaGoogle;
 window.baixarImagem = baixarImagem;
 window.goToMenu = goToMenu;
+
 
