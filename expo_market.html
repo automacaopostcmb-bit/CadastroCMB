@@ -71,7 +71,7 @@
       <div id="siteError" class="inline-error"></div>
 
       <label class="title-label">Instagram:</label>
-      <input type="text" id="insta" placeholder="Seu link" />
+      <input type="text" id="insta" placeholder="Seu link ou @usuario" />
       <div id="instaError" class="inline-error"></div>
 
       <div class="button-row">
@@ -100,7 +100,6 @@
 
     <!-- ========== ETAPA 5 ========== -->
     <section class="step" id="step5">
-  
       <div class="faixa-secao"><span>Selecione a sua categoria:</span></div>
       <div class="categoria-wrap" id="categoriaWrap">
         <label class="radio">
@@ -132,6 +131,7 @@
 
       <label class="title-label">Crie uma breve descrição:</label>
       <textarea id="descricao" rows="4"></textarea>
+      <div class="hint" id="descCount"></div> <!-- contador dinâmico -->
 
       <div class="button-row">
         <button class="btn-nav btn-voltar" data-prev>Voltar</button>
@@ -186,7 +186,7 @@
   </main>
 
   <!-- Bump para forçar recarregamento -->
-  <script src="app-expo_market.js?v=11"></script>
+  <script src="app-expo_market.js?v=12"></script>
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -197,7 +197,3 @@
   </footer>
 </body>
 </html>
-
-
-
-
