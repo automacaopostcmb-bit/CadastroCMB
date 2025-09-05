@@ -4,10 +4,7 @@
 const FRAME_URL =
   'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
 
-/* ===== TARJAS (AJUSTE AQUI) =====
-   x e y = posição em px (0,0 no canto superior esquerdo do canvas)
-   scale = multiplicador do tamanho (1 = 100%)
-*/
+/* ===== TARJAS (AJUSTE AQUI) ===== */
 const TARJAS = {
   artista: { src: 'assets/tarja-artista.png', x: 90, y: 190, scale: 0.2 },
   empresa: { src: 'assets/tarja-empresa.png', x: 90, y: 190, scale: 0.2 }
@@ -16,7 +13,7 @@ const TARJAS = {
 const CHAR_LIMITS = { titulo: { min: 5, max: 60 }, descricao: { min: 150, max: 250 } };
 const PHONE_ALLOWED_LENGTHS = [10, 11];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const INSTA_HANDLE_REGEX = /^@?[a-zA-Z0-9._]{1,30}$/;
+const INSTA_HANDLE_REGEX = /^[a-zA-Z0-9._]{1,30}$/; // apenas o @user
 
 const REVIEW_FIELDS = [
   { id: 'nome', label: 'Nome' },
@@ -24,7 +21,7 @@ const REVIEW_FIELDS = [
   { id: 'telefone', label: 'Telefone' },
   { id: 'empresa', label: 'Empresa' },
   { id: 'site', label: 'Site', format: (v) => normalizeUrlMaybe(v) },
-  { id: 'insta', label: 'Instagram', format: (v) => normalizeInstagramUrl(v) || v }
+  { id: 'insta', label: 'Instagram', format: (v) => normalizeInstagramInput(v) }
 ];
 
 const step5Messages = { charError: '', countdown: '' };
@@ -51,72 +48,75 @@ function normalizeUrlMaybe(url) {
   if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
   return u;
 }
-/* Transforma: "limasketch", "@limasketch", "instagram.com/limasketch" etc. -> https://www.instagram.com/limasketch */
-function normalizeInstagramUrl(raw) {
+
+/* --- Instagram: aceita @user, user ou link; devolve URL canonical --- */
+function normalizeInstagramInput(raw) {
   let v = (raw || '').trim();
   if (!v) return '';
-
-  // já é URL?
+  // Se veio URL
   if (/^https?:\/\//i.test(v)) {
     try {
       const u = new URL(v);
-      if (!/instagram\.com$/i.test(u.hostname.replace(/^www\./, ''))) return '';
-      const handle = u.pathname.replace(/^\/+|\/+$/g, '').split('/')[0];
-      if (!handle) return '';
-      return `https://www.instagram.com/${handle.toLowerCase()}`;
+      if (!/instagram\.com$/i.test(u.hostname) && !/\.instagram\.com$/i.test(u.hostname)) return '';
+      const seg = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+      if (!seg.length) return '';
+      const handle = seg[0].replace(/^@+/, '').toLowerCase();
+      if (!INSTA_HANDLE_REGEX.test(handle)) return '';
+      return `https://www.instagram.com/${handle}`;
     } catch { return ''; }
   }
-
-  // domínio sem protocolo
-  if (/^(www\.)?instagram\.com\//i.test(v)) {
-    const handle = v.replace(/^www\./i,'').replace(/^instagram\.com\//i,'').replace(/\/.*$/,'');
-    if (!handle) return '';
-    return `https://www.instagram.com/${handle.toLowerCase()}`;
-  }
-
-  // só o @/handle
-  v = v.replace(/^@+/, '');
-  if (INSTA_HANDLE_REGEX.test(v)) {
-    return `https://www.instagram.com/${v.toLowerCase()}`;
-  }
-  return '';
+  // Se veio só handle (com ou sem @)
+  const handle = v.replace(/^@+/, '').toLowerCase();
+  if (!INSTA_HANDLE_REGEX.test(handle)) return '';
+  return `https://www.instagram.com/${handle}`;
 }
+/* Para a legenda: transforma url/handle em @handle */
+function instagramAtFromInput(v) {
+  const url = normalizeInstagramInput(v);
+  if (!url) return '';
+  const handle = url.split('instagram.com/')[1].replace(/\/+$/, '');
+  return '@' + handle;
+}
+
 function updateStep5Warning() {
   const aviso = document.getElementById('avisoTexto');
   const min = CHAR_LIMITS.descricao.min;
   const max = CHAR_LIMITS.descricao.max;
 
   const msgs = [];
-  // regra base sempre visível
   msgs.push(`* A descrição deve ter entre ${min} e ${max} caracteres.`);
-  // estouro visual da caixa
   if (validationFlags.overflow) msgs.push('Ups, seu texto ultrapassou da caixa. Por favor, ajuste.');
-  // erro de validação (ex.: passou do máximo, ou título fora de faixa)
   if (step5Messages.charError) msgs.push(step5Messages.charError);
-  // contador faltante quando abaixo do mínimo
   if (step5Messages.countdown) msgs.push(step5Messages.countdown);
 
   const text = msgs.join(' ');
   aviso.textContent = text;
   aviso.style.display = text ? 'block' : 'none';
 }
+
+/* Atualiza contador/erros da etapa 5 em tempo real */
+function recalcStep5UI() {
+  const descricao = (document.getElementById('descricao').value || '').trim();
+  const dMin = CHAR_LIMITS.descricao.min;
+  const dMax = CHAR_LIMITS.descricao.max;
+
+  step5Messages.charError = '';
+  step5Messages.countdown = '';
+
+  if (descricao.length < dMin) step5Messages.countdown = `Faltam ${dMin - descricao.length} caracteres.`;
+  if (descricao.length > dMax) step5Messages.charError = `* A descrição deve ter no máximo ${dMax} caracteres.`;
+
+  updateStep5Warning();
+  if (typeof revalidateStepNav === 'function') revalidateStepNav();
+}
+
 function buildCaptionFromForm() {
   const empresa = (document.getElementById('empresa')?.value || '').trim();
-
-  // pega @handle a partir do campo (mesmo se virou URL)
-  const instaRaw = (document.getElementById('insta')?.value || '').trim();
-  const url = normalizeInstagramUrl(instaRaw);
-  let instaHandle = '';
-  if (url) {
-    const handle = url.replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/\/.*/,'');
-    instaHandle = '@' + handle;
-  }
-
+  const instaAt = instagramAtFromInput(document.getElementById('insta')?.value || '');
   const descLonga = (document.getElementById('descricaolonga')?.value || '').trim();
   const descCurta = (document.getElementById('descricao')?.value || '').trim();
   const descricao = descLonga || descCurta || '';
-
-  const head = `Expositor confirmado! ${empresa || '—'} ${instaHandle || ''} no CMB @comicmarketbrasil`;
+  const head = `Expositor confirmado! ${empresa || '—'} ${instaAt ? instaAt + ' ' : ''}no CMB @comicmarketbrasil`;
   const tags =
     '#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom';
   return [head, '', descricao, '', tags].join('\n');
@@ -151,7 +151,6 @@ function initCanvas() {
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
-  // frame
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
@@ -159,7 +158,6 @@ function initCanvas() {
   frameImg.onerror = () => console.error('Falha ao carregar frame:', FRAME_URL);
   frameImg.src = FRAME_URL + '?v=' + Date.now();
 
-  // uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
   logoInput?.addEventListener('change', (e) => {
@@ -173,22 +171,25 @@ function initCanvas() {
     r.readAsDataURL(e.target.files[0]);
   });
 
-  // sliders imagem de apoio + textos
   ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', gerarPost);
+  });
+
+  // contador dinâmico da etapa 5
+  ['titulo', 'descricao'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', recalcStep5UI);
   });
 
   bindCategoriaRadios();
   document.fonts?.ready?.then(gerarPost);
 }
 
-/* ---- radios + tarja (sem sliders) ---- */
+/* ---- radios + tarja ---- */
 function bindCategoriaRadios() {
   const radios = document.querySelectorAll('input[name="categoria"]');
   radios.forEach((radio) => {
     radio.addEventListener('change', () => selectCategoria(radio.value));
   });
-
   const pre = document.querySelector('input[name="categoria"]:checked');
   if (pre) selectCategoria(pre.value);
 }
@@ -213,7 +214,6 @@ function gerarPost() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // imagem de apoio
   if (lateralImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = 150, anchorPointY = 1000;
@@ -225,12 +225,10 @@ function gerarPost() {
     ctx.drawImage(lateralImg, drawX, drawY, w, h);
   }
 
-  // frame
   if (frameImg?.complete && frameImg.naturalWidth) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  // tarja (sobre o frame)
   if (tarjaCfg) {
     if (tarjaImg) {
       const w = tarjaImg.naturalWidth * tarjaCfg.scale;
@@ -245,7 +243,6 @@ function gerarPost() {
     }
   }
 
-  // logo
   if (logoImg) {
     const maxWidth = 500, maxHeight = 350;
     const s = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
@@ -281,16 +278,10 @@ function gerarPost() {
   const linhasDescricao = todas.slice(0, descricaoMaxLinhas);
   linhasDescricao.forEach((linha, i) => ctx.fillText(linha, descricaoX, descricaoY + i * 40));
 
-  // flags da etapa 5
   validationFlags.overflow = (ultrapassouTitulo || ultrapassouDescricao);
 
-  // contador dinâmico “faltam X”
-  const dLen = descricao.length;
-  const min = CHAR_LIMITS.descricao.min;
-  step5Messages.countdown = (dLen < min) ? `Faltam ${min - dLen} caracteres.` : '';
-
-  updateStep5Warning();
-  if (typeof revalidateStepNav === 'function') revalidateStepNav();
+  // atualiza contador/avisos
+  recalcStep5UI();
 }
 
 function wrapText(text, maxWidth, context) {
@@ -358,18 +349,14 @@ async function enviarParaGoogle() {
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
-  // normaliza site e instagram antes de enviar
-  const siteUrl = normalizeUrlMaybe(document.getElementById('site').value);
-  const instaUrl = normalizeInstagramUrl(document.getElementById('insta').value);
-
   const legenda = buildCaptionFromForm();
   const dados = {
     nome: document.getElementById('nome').value,
     email: document.getElementById('email').value,
     telefone: document.getElementById('telefone').value,
     empresa: document.getElementById('empresa').value,
-    site: siteUrl,
-    insta: instaUrl,
+    site: normalizeUrlMaybe(document.getElementById('site').value),
+    insta: normalizeInstagramInput(document.getElementById('insta').value),
     titulo: document.getElementById('titulo').value,
     descricao: document.getElementById('descricao').value,
     descricaolonga: document.getElementById('descricaolonga').value,
@@ -460,6 +447,7 @@ const STEP_VALIDATORS = {
     return okEmail && okTel;
   },
   3: () => {
+    // SITE
     const siteInput = document.getElementById('site');
     let url = normalizeUrlMaybe(siteInput.value);
     let okSite = false;
@@ -470,35 +458,35 @@ const STEP_VALIDATORS = {
     } catch { okSite = false; }
     showFieldError('site', okSite ? '' : 'Digite um site válido. Ex.: https://suaempresa.com');
 
+    // INSTAGRAM (aceita handle ou link) e normaliza para URL
     const instaInput = document.getElementById('insta');
-    const igUrl = normalizeInstagramUrl(instaInput.value);
-    const okInsta = !!igUrl;
+    const normalized = normalizeInstagramInput(instaInput.value);
+    const okInsta = !!normalized;
     showFieldError('insta', okInsta ? '' : 'Informe seu @ ou link do Instagram.');
-    if (okInsta) instaInput.value = igUrl;
+    if (okInsta) instaInput.value = normalized;
 
     return okSite && okInsta;
   },
   5: () => {
+    recalcStep5UI(); // garante contador/erros atualizados
+
     const t = (document.getElementById('titulo').value || '').trim();
     const d = (document.getElementById('descricao').value || '').trim();
-    let ok = true;
 
     const tMin = CHAR_LIMITS.titulo.min, tMax = CHAR_LIMITS.titulo.max;
     const dMin = CHAR_LIMITS.descricao.min, dMax = CHAR_LIMITS.descricao.max;
 
-    step5Messages.charError = '';   // limpa erro “vermelhinho”
-    step5Messages.countdown = '';   // contador é atualizado em gerarPost()
-
+    let ok = true;
+    // erro “fixo” desta etapa (além do contador e overflow)
     if (t.length < tMin || t.length > tMax) {
       step5Messages.charError = `* O título deve ter entre ${tMin} e ${tMax} caracteres.`;
       ok = false;
-    } else if (d.length > dMax) {
+    }
+    if (d.length > dMax) {
       step5Messages.charError = `* A descrição deve ter no máximo ${dMax} caracteres.`;
       ok = false;
-    } else if (d.length < dMin) {
-      // abaixo do mínimo: bloqueia avanço mas só mostra contador (sem erro extra)
-      ok = false;
     }
+    if (d.length < dMin) ok = false;
 
     const selected = document.querySelector('input[name="categoria"]:checked');
     const catErr = document.getElementById('categoriaError');
@@ -556,6 +544,7 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
+  if (currentStep === 5) recalcStep5UI();
   if (currentStep === 7) { try { buildReview(); } catch (e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
