@@ -16,6 +16,7 @@ const TARJAS = {
 const CHAR_LIMITS = { titulo: { min: 5, max: 60 }, descricao: { min: 150, max: 250 } };
 const PHONE_ALLOWED_LENGTHS = [10, 11];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+const INSTA_HANDLE_REGEX = /^@?[a-zA-Z0-9._]{1,30}$/;
 
 const REVIEW_FIELDS = [
   { id: 'nome', label: 'Nome' },
@@ -23,10 +24,10 @@ const REVIEW_FIELDS = [
   { id: 'telefone', label: 'Telefone' },
   { id: 'empresa', label: 'Empresa' },
   { id: 'site', label: 'Site', format: (v) => normalizeUrlMaybe(v) },
-  { id: 'insta', label: 'Instagram', format: (v) => normalizeInstagram(v).url }
+  { id: 'insta', label: 'Instagram', format: (v) => normalizeInstagramUrl(v) || v }
 ];
 
-const step5Messages = { charError: '' };
+const step5Messages = { charError: '', countdown: '' };
 const validationFlags = { overflow: false };
 
 /* ===========================
@@ -50,69 +51,66 @@ function normalizeUrlMaybe(url) {
   if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
   return u;
 }
-/* Instagram: aceita link, @handle ou handle puro; retorna {url, handle} */
-function normalizeInstagram(raw) {
+/* Transforma: "limasketch", "@limasketch", "instagram.com/limasketch" etc. -> https://www.instagram.com/limasketch */
+function normalizeInstagramUrl(raw) {
   let v = (raw || '').trim();
-  if (!v) return { url: '', handle: '' };
-  v = v.replace(/\s+/g, '');
+  if (!v) return '';
 
-  // URL (com ou sem https)
-  if (/^(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\//i.test(v)) {
-    if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+  // já é URL?
+  if (/^https?:\/\//i.test(v)) {
     try {
       const u = new URL(v);
-      const host = u.hostname.replace(/^www\./, '').toLowerCase();
-      if (host === 'instagram.com' || host === 'instagr.am') {
-        const seg = u.pathname.split('/').filter(Boolean)[0] || '';
-        const handle = seg.replace(/^@+/, '').toLowerCase();
-        if (/^[a-z0-9._]{1,30}$/.test(handle)) {
-          return { url: `https://www.instagram.com/${handle}`, handle };
-        }
-      }
-    } catch {}
-    return { url: '', handle: '' };
+      if (!/instagram\.com$/i.test(u.hostname.replace(/^www\./, ''))) return '';
+      const handle = u.pathname.replace(/^\/+|\/+$/g, '').split('/')[0];
+      if (!handle) return '';
+      return `https://www.instagram.com/${handle.toLowerCase()}`;
+    } catch { return ''; }
   }
 
-  // handle / @handle
-  const handle = v.replace(/^@+/, '').toLowerCase();
-  if (/^[a-z0-9._]{1,30}$/.test(handle)) {
-    return { url: `https://www.instagram.com/${handle}`, handle };
+  // domínio sem protocolo
+  if (/^(www\.)?instagram\.com\//i.test(v)) {
+    const handle = v.replace(/^www\./i,'').replace(/^instagram\.com\//i,'').replace(/\/.*$/,'');
+    if (!handle) return '';
+    return `https://www.instagram.com/${handle.toLowerCase()}`;
   }
-  return { url: '', handle: '' };
+
+  // só o @/handle
+  v = v.replace(/^@+/, '');
+  if (INSTA_HANDLE_REGEX.test(v)) {
+    return `https://www.instagram.com/${v.toLowerCase()}`;
+  }
+  return '';
 }
-
 function updateStep5Warning() {
   const aviso = document.getElementById('avisoTexto');
+  const min = CHAR_LIMITS.descricao.min;
+  const max = CHAR_LIMITS.descricao.max;
+
   const msgs = [];
-  if (validationFlags.overflow) msgs.push('* Ups, seu texto ultrapassou da caixa. Por favor ajuste!');
+  // regra base sempre visível
+  msgs.push(`* A descrição deve ter entre ${min} e ${max} caracteres.`);
+  // estouro visual da caixa
+  if (validationFlags.overflow) msgs.push('Ups, seu texto ultrapassou da caixa. Por favor, ajuste.');
+  // erro de validação (ex.: passou do máximo, ou título fora de faixa)
   if (step5Messages.charError) msgs.push(step5Messages.charError);
+  // contador faltante quando abaixo do mínimo
+  if (step5Messages.countdown) msgs.push(step5Messages.countdown);
+
   const text = msgs.join(' ');
   aviso.textContent = text;
   aviso.style.display = text ? 'block' : 'none';
 }
-
-/* Contador dinâmico da descrição (faltam X até o mínimo) */
-function updateDescricaoCount() {
-  const el = document.getElementById('descricao');
-  const counter = document.getElementById('descCount');
-  if (!el || !counter) return;
-
-  const len = (el.value || '').length;
-  const min = CHAR_LIMITS.descricao.min;
-
-  if (len < min) {
-    counter.textContent = `Faltam ${min - len} caracteres.`;
-    counter.style.display = 'block';
-  } else {
-    counter.textContent = '';
-    counter.style.display = 'none';
-  }
-}
-
 function buildCaptionFromForm() {
   const empresa = (document.getElementById('empresa')?.value || '').trim();
-  const { handle } = normalizeInstagram(document.getElementById('insta')?.value || '');
-  const instaHandle = handle ? '@' + handle : '';
+
+  // pega @handle a partir do campo (mesmo se virou URL)
+  const instaRaw = (document.getElementById('insta')?.value || '').trim();
+  const url = normalizeInstagramUrl(instaRaw);
+  let instaHandle = '';
+  if (url) {
+    const handle = url.replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/\/.*/,'');
+    instaHandle = '@' + handle;
+  }
 
   const descLonga = (document.getElementById('descricaolonga')?.value || '').trim();
   const descCurta = (document.getElementById('descricao')?.value || '').trim();
@@ -129,7 +127,7 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 function loadImage(src) {
-  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now(); // cache-buster p/ ver mudanças
+  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now();
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -191,18 +189,17 @@ function bindCategoriaRadios() {
     radio.addEventListener('change', () => selectCategoria(radio.value));
   });
 
-  // se já vier pré-selecionado
   const pre = document.querySelector('input[name="categoria"]:checked');
   if (pre) selectCategoria(pre.value);
 }
 async function selectCategoria(value) {
   categoriaSelecionada = value;
-  tarjaCfg = { ...TARJAS[value] };       // valores fixos definidos no código
+  tarjaCfg = { ...TARJAS[value] };
   try {
     tarjaImg = await loadImage(tarjaCfg.src);
   } catch (e) {
     console.error('Não foi possível carregar a tarja:', e);
-    tarjaImg = null; // fallback visual
+    tarjaImg = null;
   }
   gerarPost();
   revalidateStepNav();
@@ -233,14 +230,13 @@ function gerarPost() {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
-  // tarja (sobre o frame) — usa APENAS tarjaCfg (sem sliders)
+  // tarja (sobre o frame)
   if (tarjaCfg) {
     if (tarjaImg) {
       const w = tarjaImg.naturalWidth * tarjaCfg.scale;
       const h = tarjaImg.naturalHeight * tarjaCfg.scale;
       ctx.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
     } else {
-      // fallback para debug visual
       ctx.fillStyle = '#ffd400';
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 10;
@@ -285,7 +281,14 @@ function gerarPost() {
   const linhasDescricao = todas.slice(0, descricaoMaxLinhas);
   linhasDescricao.forEach((linha, i) => ctx.fillText(linha, descricaoX, descricaoY + i * 40));
 
+  // flags da etapa 5
   validationFlags.overflow = (ultrapassouTitulo || ultrapassouDescricao);
+
+  // contador dinâmico “faltam X”
+  const dLen = descricao.length;
+  const min = CHAR_LIMITS.descricao.min;
+  step5Messages.countdown = (dLen < min) ? `Faltam ${min - dLen} caracteres.` : '';
+
   updateStep5Warning();
   if (typeof revalidateStepNav === 'function') revalidateStepNav();
 }
@@ -355,8 +358,9 @@ async function enviarParaGoogle() {
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
-  // Normaliza Instagram para URL e extrai handle para legenda
-  const instaParsed = normalizeInstagram(document.getElementById('insta').value);
+  // normaliza site e instagram antes de enviar
+  const siteUrl = normalizeUrlMaybe(document.getElementById('site').value);
+  const instaUrl = normalizeInstagramUrl(document.getElementById('insta').value);
 
   const legenda = buildCaptionFromForm();
   const dados = {
@@ -364,8 +368,8 @@ async function enviarParaGoogle() {
     email: document.getElementById('email').value,
     telefone: document.getElementById('telefone').value,
     empresa: document.getElementById('empresa').value,
-    site: document.getElementById('site').value,
-    insta: instaParsed.url,                 // <-- envia URL normalizada
+    site: siteUrl,
+    insta: instaUrl,
     titulo: document.getElementById('titulo').value,
     descricao: document.getElementById('descricao').value,
     descricaolonga: document.getElementById('descricaolonga').value,
@@ -438,7 +442,7 @@ const REQUIRED_BY_STEP = {
   2: ['nome','email','telefone'],
   3: ['empresa','site','insta'],
   4: ['logo','lateral'],
-  5: ['titulo','descricao'], // categoria validada abaixo
+  5: ['titulo','descricao'],
   6: []
 };
 const GLOBAL_VALIDATORS = [];
@@ -467,10 +471,10 @@ const STEP_VALIDATORS = {
     showFieldError('site', okSite ? '' : 'Digite um site válido. Ex.: https://suaempresa.com');
 
     const instaInput = document.getElementById('insta');
-    const parsed = normalizeInstagram(instaInput.value);
-    const okInsta = !!parsed.handle;
-    showFieldError('insta', okInsta ? '' : 'Informe um Instagram válido (link ou @usuario).');
-    if (okInsta) instaInput.value = parsed.url; // salva normalizado no input
+    const igUrl = normalizeInstagramUrl(instaInput.value);
+    const okInsta = !!igUrl;
+    showFieldError('insta', okInsta ? '' : 'Informe seu @ ou link do Instagram.');
+    if (okInsta) instaInput.value = igUrl;
 
     return okSite && okInsta;
   },
@@ -478,13 +482,21 @@ const STEP_VALIDATORS = {
     const t = (document.getElementById('titulo').value || '').trim();
     const d = (document.getElementById('descricao').value || '').trim();
     let ok = true;
-    step5Messages.charError = '';
 
-    if (t.length < CHAR_LIMITS.titulo.min || t.length > CHAR_LIMITS.titulo.max) {
-      step5Messages.charError = `* O título deve ter entre ${CHAR_LIMITS.titulo.min} e ${CHAR_LIMITS.titulo.max} caracteres.`;
+    const tMin = CHAR_LIMITS.titulo.min, tMax = CHAR_LIMITS.titulo.max;
+    const dMin = CHAR_LIMITS.descricao.min, dMax = CHAR_LIMITS.descricao.max;
+
+    step5Messages.charError = '';   // limpa erro “vermelhinho”
+    step5Messages.countdown = '';   // contador é atualizado em gerarPost()
+
+    if (t.length < tMin || t.length > tMax) {
+      step5Messages.charError = `* O título deve ter entre ${tMin} e ${tMax} caracteres.`;
       ok = false;
-    } else if (d.length < CHAR_LIMITS.descricao.min || d.length > CHAR_LIMITS.descricao.max) {
-      step5Messages.charError = `* A descrição deve ter entre ${CHAR_LIMITS.descricao.min} e ${CHAR_LIMITS.descricao.max} caracteres.`;
+    } else if (d.length > dMax) {
+      step5Messages.charError = `* A descrição deve ter no máximo ${dMax} caracteres.`;
+      ok = false;
+    } else if (d.length < dMin) {
+      // abaixo do mínimo: bloqueia avanço mas só mostra contador (sem erro extra)
       ok = false;
     }
 
@@ -544,7 +556,6 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-  if (currentStep === 5) { try { updateDescricaoCount(); } catch(e) {} }
   if (currentStep === 7) { try { buildReview(); } catch (e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
@@ -598,13 +609,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
-
-  // contador dinâmico da descrição
-  document.getElementById('descricao')?.addEventListener('input', () => {
-    updateDescricaoCount();
-    revalidateStepNav();
-  });
-  updateDescricaoCount();
 
   document.addEventListener('input', (e) => {
     const activeStep = steps[currentStep - 1];
