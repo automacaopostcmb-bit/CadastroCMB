@@ -484,7 +484,7 @@ const STEP_VALIDATORS = {
       step5Messages.charError = `* O título deve ter entre ${CHAR_LIMITS.titulo.min} e ${CHAR_LIMITS.titulo.max} caracteres.`;
       ok = false;
     } else if (d.length < CHAR_LIMITS.descricao.min || d.length > CHAR_LIMITS.descricao.max) {
-      step5Messages.charError = `* A descrição deve ter entre ${CHAR_LIMITS.descricao.min} e ${CHAR_LIMITS.descricao.max} caracteres.`;
+      step5Messages.charError = `* A descrição deve ter no mínimo ${CHAR_LIMITS.descricao.min} caracteres.`;
       ok = false;
     }
 
@@ -623,3 +623,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
+
