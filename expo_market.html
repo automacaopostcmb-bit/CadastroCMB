@@ -37,7 +37,7 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 2 ========== -->
+    <!-- ==========  2 ========== -->
     <section class="step" id="step2">
       <div class="faixa-secao"><span>Sobre você:</span></div>
 
@@ -58,7 +58,7 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 3 ========== -->
+    <!-- ==========  3 ========== -->
     <section class="step" id="step3">
       <div class="faixa-secao"><span>Sobre sua empresa:</span></div>
 
@@ -71,8 +71,7 @@
       <div id="siteError" class="inline-error"></div>
 
       <label class="title-label">Instagram:</label>
-      <div class="hint">(Escreva o seu @, não o link)</div>
-      <input type="text" id="insta" placeholder="@" />
+      <input type="text" id="insta" placeholder="Seu link" />
       <div id="instaError" class="inline-error"></div>
 
       <div class="button-row">
@@ -81,16 +80,16 @@
       </div>
     </section>
 
-    <!-- ========== ETAPA 4 ========== -->
+    <!-- ==========  4 ========== -->
     <section class="step" id="step4">
       <div class="faixa-secao"><span>Imagens</span></div>
 
       <label class="title-label">Envie o seu Logo com fundo transparente:</label>
-      <div class="hint">(Use uma imagem sem bordas, mesmo que transparentes.)</div>
+      <div class="hint">(Mínimo 500x500px. Use uma imagem sem bordas, mesmo que transparentes.)</div>
       <input type="file" id="logo" accept="image/*" />
 
       <label class="title-label">Envie uma imagem de apoio:</label>
-      <div class="hint">(Outra imagem que podemos usar para mostrar mais de você.)</div>
+      <div class="hint">(Mínimo 500x500px. Essa é um outra imagem que podemos usar para mostrar mais de você.)</div>
       <input type="file" id="lateral" accept="image/*" />
 
       <div class="button-row">
@@ -101,8 +100,7 @@
 
     <!-- ========== ETAPA 5 ========== -->
     <section class="step" id="step5">
-      <div class="faixa-secao"><span>Vamos criar a sua divulgação!</span></div>
-
+  
       <div class="faixa-secao"><span>Selecione a sua categoria:</span></div>
       <div class="categoria-wrap" id="categoriaWrap">
         <label class="radio">
@@ -172,9 +170,9 @@
     <!-- FINAL -->
     <section id="final-screen" class="final-screen">
       <div class="final-card">
-        <h2>✅ Enviado com sucesso!</h2>
-        <p>Obrigado por enviar suas informações. Você já pode baixar a imagem.</p>
-        <button class="btn-download" id="btn-final-download" onclick="baixarImagem()">Baixar Imagem</button>
+        <h2>✅ Cadastro realizado com sucesso!</h2>
+        <p>Prosseguiremos com a formalização do contrato e entraremos em contato. Em breve comunicaremos sua participação no CMB e encaminharemos a imagem de divulgação.</p>
+        <button class="btn-download" id="btn-final-download" onclick="baixarImagem()" hidden>Baixar Imagem</button>
         <button class="btn-menu" id="btn-menu" onclick="goToMenu()">Menu</button>
       </div>
     </section>
@@ -199,5 +197,6 @@
   </footer>
 </body>
 </html>
+
 
 
