@@ -16,7 +16,6 @@ const TARJAS = {
 const CHAR_LIMITS = { titulo: { min: 5, max: 60 }, descricao: { min: 150, max: 250 } };
 const PHONE_ALLOWED_LENGTHS = [10, 11];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const INSTA_REGEX = /^@?[a-zA-Z0-9._]{1,30}$/;
 
 const REVIEW_FIELDS = [
   { id: 'nome', label: 'Nome' },
@@ -24,7 +23,7 @@ const REVIEW_FIELDS = [
   { id: 'telefone', label: 'Telefone' },
   { id: 'empresa', label: 'Empresa' },
   { id: 'site', label: 'Site', format: (v) => normalizeUrlMaybe(v) },
-  { id: 'insta', label: 'Instagram' }
+  { id: 'insta', label: 'Instagram', format: (v) => normalizeInstagram(v).url }
 ];
 
 const step5Messages = { charError: '' };
@@ -51,6 +50,37 @@ function normalizeUrlMaybe(url) {
   if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
   return u;
 }
+/* Instagram: aceita link, @handle ou handle puro; retorna {url, handle} */
+function normalizeInstagram(raw) {
+  let v = (raw || '').trim();
+  if (!v) return { url: '', handle: '' };
+  v = v.replace(/\s+/g, '');
+
+  // URL (com ou sem https)
+  if (/^(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\//i.test(v)) {
+    if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+    try {
+      const u = new URL(v);
+      const host = u.hostname.replace(/^www\./, '').toLowerCase();
+      if (host === 'instagram.com' || host === 'instagr.am') {
+        const seg = u.pathname.split('/').filter(Boolean)[0] || '';
+        const handle = seg.replace(/^@+/, '').toLowerCase();
+        if (/^[a-z0-9._]{1,30}$/.test(handle)) {
+          return { url: `https://www.instagram.com/${handle}`, handle };
+        }
+      }
+    } catch {}
+    return { url: '', handle: '' };
+  }
+
+  // handle / @handle
+  const handle = v.replace(/^@+/, '').toLowerCase();
+  if (/^[a-z0-9._]{1,30}$/.test(handle)) {
+    return { url: `https://www.instagram.com/${handle}`, handle };
+  }
+  return { url: '', handle: '' };
+}
+
 function updateStep5Warning() {
   const aviso = document.getElementById('avisoTexto');
   const msgs = [];
@@ -60,14 +90,35 @@ function updateStep5Warning() {
   aviso.textContent = text;
   aviso.style.display = text ? 'block' : 'none';
 }
+
+/* Contador dinâmico da descrição (faltam X até o mínimo) */
+function updateDescricaoCount() {
+  const el = document.getElementById('descricao');
+  const counter = document.getElementById('descCount');
+  if (!el || !counter) return;
+
+  const len = (el.value || '').length;
+  const min = CHAR_LIMITS.descricao.min;
+
+  if (len < min) {
+    counter.textContent = `Faltam ${min - len} caracteres.`;
+    counter.style.display = 'block';
+  } else {
+    counter.textContent = '';
+    counter.style.display = 'none';
+  }
+}
+
 function buildCaptionFromForm() {
   const empresa = (document.getElementById('empresa')?.value || '').trim();
-  let insta = (document.getElementById('insta')?.value || '').trim();
-  if (insta) insta = '@' + insta.replace(/^@+/, '');
+  const { handle } = normalizeInstagram(document.getElementById('insta')?.value || '');
+  const instaHandle = handle ? '@' + handle : '';
+
   const descLonga = (document.getElementById('descricaolonga')?.value || '').trim();
   const descCurta = (document.getElementById('descricao')?.value || '').trim();
   const descricao = descLonga || descCurta || '';
-  const head = `Expositor confirmado! ${empresa || '—'} ${insta || ''} no CMB @comicmarketbrasil`;
+
+  const head = `Expositor confirmado! ${empresa || '—'} ${instaHandle || ''} no CMB @comicmarketbrasil`;
   const tags =
     '#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom';
   return [head, '', descricao, '', tags].join('\n');
@@ -151,7 +202,7 @@ async function selectCategoria(value) {
     tarjaImg = await loadImage(tarjaCfg.src);
   } catch (e) {
     console.error('Não foi possível carregar a tarja:', e);
-    tarjaImg = null; // cai no fallback visual
+    tarjaImg = null; // fallback visual
   }
   gerarPost();
   revalidateStepNav();
@@ -304,6 +355,9 @@ async function enviarParaGoogle() {
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
+  // Normaliza Instagram para URL e extrai handle para legenda
+  const instaParsed = normalizeInstagram(document.getElementById('insta').value);
+
   const legenda = buildCaptionFromForm();
   const dados = {
     nome: document.getElementById('nome').value,
@@ -311,7 +365,7 @@ async function enviarParaGoogle() {
     telefone: document.getElementById('telefone').value,
     empresa: document.getElementById('empresa').value,
     site: document.getElementById('site').value,
-    insta: document.getElementById('insta').value,
+    insta: instaParsed.url,                 // <-- envia URL normalizada
     titulo: document.getElementById('titulo').value,
     descricao: document.getElementById('descricao').value,
     descricaolonga: document.getElementById('descricaolonga').value,
@@ -413,10 +467,10 @@ const STEP_VALIDATORS = {
     showFieldError('site', okSite ? '' : 'Digite um site válido. Ex.: https://suaempresa.com');
 
     const instaInput = document.getElementById('insta');
-    let ig = (instaInput.value || '').trim();
-    const okInsta = INSTA_REGEX.test(ig);
-    showFieldError('insta', okInsta ? '' : 'Use apenas letras, números, ponto e underline.');
-    if (okInsta) { ig = ig.replace(/^@?/, '@'); instaInput.value = ig.toLowerCase(); }
+    const parsed = normalizeInstagram(instaInput.value);
+    const okInsta = !!parsed.handle;
+    showFieldError('insta', okInsta ? '' : 'Informe um Instagram válido (link ou @usuario).');
+    if (okInsta) instaInput.value = parsed.url; // salva normalizado no input
 
     return okSite && okInsta;
   },
@@ -490,6 +544,7 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
+  if (currentStep === 5) { try { updateDescricaoCount(); } catch(e) {} }
   if (currentStep === 7) { try { buildReview(); } catch (e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
@@ -544,6 +599,13 @@ document.addEventListener('DOMContentLoaded', () => {
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
 
+  // contador dinâmico da descrição
+  document.getElementById('descricao')?.addEventListener('input', () => {
+    updateDescricaoCount();
+    revalidateStepNav();
+  });
+  updateDescricaoCount();
+
   document.addEventListener('input', (e) => {
     const activeStep = steps[currentStep - 1];
     if (!activeStep?.contains(e.target)) return;
@@ -561,5 +623,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showStep(1);
 });
-
-
