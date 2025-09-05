@@ -4,7 +4,10 @@
 const FRAME_URL =
   'https://cdn.jsdelivr.net/gh/automacaopostcmb-bit/CadastroCMB@main/assets/Frame_expo_market.png';
 
-/* ===== TARJAS (AJUSTE AQUI) ===== */
+/* ===== TARJAS (AJUSTE AQUI) =====
+   x e y = posição em px (0,0 no canto superior esquerdo do canvas)
+   scale = multiplicador do tamanho (1 = 100%)
+*/
 const TARJAS = {
   artista: { src: 'assets/tarja-artista.png', x: 90, y: 190, scale: 0.2 },
   empresa: { src: 'assets/tarja-empresa.png', x: 90, y: 190, scale: 0.2 }
@@ -13,7 +16,6 @@ const TARJAS = {
 const CHAR_LIMITS = { titulo: { min: 5, max: 60 }, descricao: { min: 150, max: 250 } };
 const PHONE_ALLOWED_LENGTHS = [10, 11];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const INSTA_HANDLE_REGEX = /^[a-zA-Z0-9._]{1,30}$/; // apenas o @user
 
 const REVIEW_FIELDS = [
   { id: 'nome', label: 'Nome' },
@@ -21,10 +23,10 @@ const REVIEW_FIELDS = [
   { id: 'telefone', label: 'Telefone' },
   { id: 'empresa', label: 'Empresa' },
   { id: 'site', label: 'Site', format: (v) => normalizeUrlMaybe(v) },
-  { id: 'insta', label: 'Instagram', format: (v) => normalizeInstagramInput(v) }
+  { id: 'insta', label: 'Instagram', format: (v) => normalizeInstagram(v).url }
 ];
 
-const step5Messages = { charError: '', countdown: '' };
+const step5Messages = { charError: '' };
 const validationFlags = { overflow: false };
 
 /* ===========================
@@ -48,75 +50,75 @@ function normalizeUrlMaybe(url) {
   if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
   return u;
 }
-
-/* --- Instagram: aceita @user, user ou link; devolve URL canonical --- */
-function normalizeInstagramInput(raw) {
+/* Instagram: aceita link, @handle ou handle puro; retorna {url, handle} */
+function normalizeInstagram(raw) {
   let v = (raw || '').trim();
-  if (!v) return '';
-  // Se veio URL
-  if (/^https?:\/\//i.test(v)) {
+  if (!v) return { url: '', handle: '' };
+  v = v.replace(/\s+/g, '');
+
+  // URL (com ou sem https)
+  if (/^(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\//i.test(v)) {
+    if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
     try {
       const u = new URL(v);
-      if (!/instagram\.com$/i.test(u.hostname) && !/\.instagram\.com$/i.test(u.hostname)) return '';
-      const seg = u.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
-      if (!seg.length) return '';
-      const handle = seg[0].replace(/^@+/, '').toLowerCase();
-      if (!INSTA_HANDLE_REGEX.test(handle)) return '';
-      return `https://www.instagram.com/${handle}`;
-    } catch { return ''; }
+      const host = u.hostname.replace(/^www\./, '').toLowerCase();
+      if (host === 'instagram.com' || host === 'instagr.am') {
+        const seg = u.pathname.split('/').filter(Boolean)[0] || '';
+        const handle = seg.replace(/^@+/, '').toLowerCase();
+        if (/^[a-z0-9._]{1,30}$/.test(handle)) {
+          return { url: `https://www.instagram.com/${handle}`, handle };
+        }
+      }
+    } catch {}
+    return { url: '', handle: '' };
   }
-  // Se veio só handle (com ou sem @)
+
+  // handle / @handle
   const handle = v.replace(/^@+/, '').toLowerCase();
-  if (!INSTA_HANDLE_REGEX.test(handle)) return '';
-  return `https://www.instagram.com/${handle}`;
-}
-/* Para a legenda: transforma url/handle em @handle */
-function instagramAtFromInput(v) {
-  const url = normalizeInstagramInput(v);
-  if (!url) return '';
-  const handle = url.split('instagram.com/')[1].replace(/\/+$/, '');
-  return '@' + handle;
+  if (/^[a-z0-9._]{1,30}$/.test(handle)) {
+    return { url: `https://www.instagram.com/${handle}`, handle };
+  }
+  return { url: '', handle: '' };
 }
 
 function updateStep5Warning() {
   const aviso = document.getElementById('avisoTexto');
-  const min = CHAR_LIMITS.descricao.min;
-  const max = CHAR_LIMITS.descricao.max;
-
   const msgs = [];
-  msgs.push(`* A descrição deve ter entre ${min} e ${max} caracteres.`);
-  if (validationFlags.overflow) msgs.push('Ups, seu texto ultrapassou da caixa. Por favor, ajuste.');
+  if (validationFlags.overflow) msgs.push('* Ups, seu texto ultrapassou da caixa. Por favor ajuste!');
   if (step5Messages.charError) msgs.push(step5Messages.charError);
-  if (step5Messages.countdown) msgs.push(step5Messages.countdown);
-
   const text = msgs.join(' ');
   aviso.textContent = text;
   aviso.style.display = text ? 'block' : 'none';
 }
 
-/* Atualiza contador/erros da etapa 5 em tempo real */
-function recalcStep5UI() {
-  const descricao = (document.getElementById('descricao').value || '').trim();
-  const dMin = CHAR_LIMITS.descricao.min;
-  const dMax = CHAR_LIMITS.descricao.max;
+/* Contador dinâmico da descrição (faltam X até o mínimo) */
+function updateDescricaoCount() {
+  const el = document.getElementById('descricao');
+  const counter = document.getElementById('descCount');
+  if (!el || !counter) return;
 
-  step5Messages.charError = '';
-  step5Messages.countdown = '';
+  const len = (el.value || '').length;
+  const min = CHAR_LIMITS.descricao.min;
 
-  if (descricao.length < dMin) step5Messages.countdown = `Faltam ${dMin - descricao.length} caracteres.`;
-  if (descricao.length > dMax) step5Messages.charError = `* A descrição deve ter no máximo ${dMax} caracteres.`;
-
-  updateStep5Warning();
-  if (typeof revalidateStepNav === 'function') revalidateStepNav();
+  if (len < min) {
+    counter.textContent = `Faltam ${min - len} caracteres.`;
+    counter.style.display = 'block';
+  } else {
+    counter.textContent = '';
+    counter.style.display = 'none';
+  }
 }
 
 function buildCaptionFromForm() {
   const empresa = (document.getElementById('empresa')?.value || '').trim();
-  const instaAt = instagramAtFromInput(document.getElementById('insta')?.value || '');
+  const { handle } = normalizeInstagram(document.getElementById('insta')?.value || '');
+  const instaHandle = handle ? '@' + handle : '';
+
   const descLonga = (document.getElementById('descricaolonga')?.value || '').trim();
   const descCurta = (document.getElementById('descricao')?.value || '').trim();
   const descricao = descLonga || descCurta || '';
-  const head = `Expositor confirmado! ${empresa || '—'} ${instaAt ? instaAt + ' ' : ''}no CMB @comicmarketbrasil`;
+
+  const head = `Expositor confirmado! ${empresa || '—'} ${instaHandle || ''} no CMB @comicmarketbrasil`;
   const tags =
     '#ComicMarketBrasil #QuadrinhosNacionais #QuadrinhosBrasileiros #hqbr #mangabr #historiaemquadrinhos #desenhistabrasileiro #ilustradorbrasileiro #fapcom';
   return [head, '', descricao, '', tags].join('\n');
@@ -127,7 +129,7 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 function loadImage(src) {
-  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now();
+  const bust = (/\?/.test(src) ? '&' : '?') + 'v=' + Date.now(); // cache-buster p/ ver mudanças
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -151,6 +153,7 @@ function initCanvas() {
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
+  // frame
   frameImg = new Image();
   frameImg.crossOrigin = 'anonymous';
   frameImg.referrerPolicy = 'no-referrer';
@@ -158,6 +161,7 @@ function initCanvas() {
   frameImg.onerror = () => console.error('Falha ao carregar frame:', FRAME_URL);
   frameImg.src = FRAME_URL + '?v=' + Date.now();
 
+  // uploads
   const logoInput = document.getElementById('logo');
   const lateralInput = document.getElementById('lateral');
   logoInput?.addEventListener('change', (e) => {
@@ -171,36 +175,34 @@ function initCanvas() {
     r.readAsDataURL(e.target.files[0]);
   });
 
+  // sliders imagem de apoio + textos
   ['imgScale', 'imgX', 'imgY', 'titulo', 'descricao'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', gerarPost);
-  });
-
-  // contador dinâmico da etapa 5
-  ['titulo', 'descricao'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', recalcStep5UI);
   });
 
   bindCategoriaRadios();
   document.fonts?.ready?.then(gerarPost);
 }
 
-/* ---- radios + tarja ---- */
+/* ---- radios + tarja (sem sliders) ---- */
 function bindCategoriaRadios() {
   const radios = document.querySelectorAll('input[name="categoria"]');
   radios.forEach((radio) => {
     radio.addEventListener('change', () => selectCategoria(radio.value));
   });
+
+  // se já vier pré-selecionado
   const pre = document.querySelector('input[name="categoria"]:checked');
   if (pre) selectCategoria(pre.value);
 }
 async function selectCategoria(value) {
   categoriaSelecionada = value;
-  tarjaCfg = { ...TARJAS[value] };
+  tarjaCfg = { ...TARJAS[value] };       // valores fixos definidos no código
   try {
     tarjaImg = await loadImage(tarjaCfg.src);
   } catch (e) {
     console.error('Não foi possível carregar a tarja:', e);
-    tarjaImg = null;
+    tarjaImg = null; // fallback visual
   }
   gerarPost();
   revalidateStepNav();
@@ -214,6 +216,7 @@ function gerarPost() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // imagem de apoio
   if (lateralImg) {
     const scale = parseFloat(document.getElementById('imgScale').value || '1');
     const anchorPointX = 150, anchorPointY = 1000;
@@ -225,16 +228,19 @@ function gerarPost() {
     ctx.drawImage(lateralImg, drawX, drawY, w, h);
   }
 
+  // frame
   if (frameImg?.complete && frameImg.naturalWidth) {
     ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
   }
 
+  // tarja (sobre o frame) — usa APENAS tarjaCfg (sem sliders)
   if (tarjaCfg) {
     if (tarjaImg) {
       const w = tarjaImg.naturalWidth * tarjaCfg.scale;
       const h = tarjaImg.naturalHeight * tarjaCfg.scale;
       ctx.drawImage(tarjaImg, tarjaCfg.x, tarjaCfg.y, w, h);
     } else {
+      // fallback para debug visual
       ctx.fillStyle = '#ffd400';
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 10;
@@ -243,6 +249,7 @@ function gerarPost() {
     }
   }
 
+  // logo
   if (logoImg) {
     const maxWidth = 500, maxHeight = 350;
     const s = Math.min(maxWidth / logoImg.width, maxHeight / logoImg.height);
@@ -279,9 +286,8 @@ function gerarPost() {
   linhasDescricao.forEach((linha, i) => ctx.fillText(linha, descricaoX, descricaoY + i * 40));
 
   validationFlags.overflow = (ultrapassouTitulo || ultrapassouDescricao);
-
-  // atualiza contador/avisos
-  recalcStep5UI();
+  updateStep5Warning();
+  if (typeof revalidateStepNav === 'function') revalidateStepNav();
 }
 
 function wrapText(text, maxWidth, context) {
@@ -349,14 +355,17 @@ async function enviarParaGoogle() {
     previewBase64 = { name: 'preview.png', type: 'image/png', content: dataURL.split(',')[1] };
   }
 
+  // Normaliza Instagram para URL e extrai handle para legenda
+  const instaParsed = normalizeInstagram(document.getElementById('insta').value);
+
   const legenda = buildCaptionFromForm();
   const dados = {
     nome: document.getElementById('nome').value,
     email: document.getElementById('email').value,
     telefone: document.getElementById('telefone').value,
     empresa: document.getElementById('empresa').value,
-    site: normalizeUrlMaybe(document.getElementById('site').value),
-    insta: normalizeInstagramInput(document.getElementById('insta').value),
+    site: document.getElementById('site').value,
+    insta: instaParsed.url,                 // <-- envia URL normalizada
     titulo: document.getElementById('titulo').value,
     descricao: document.getElementById('descricao').value,
     descricaolonga: document.getElementById('descricaolonga').value,
@@ -429,7 +438,7 @@ const REQUIRED_BY_STEP = {
   2: ['nome','email','telefone'],
   3: ['empresa','site','insta'],
   4: ['logo','lateral'],
-  5: ['titulo','descricao'],
+  5: ['titulo','descricao'], // categoria validada abaixo
   6: []
 };
 const GLOBAL_VALIDATORS = [];
@@ -447,7 +456,6 @@ const STEP_VALIDATORS = {
     return okEmail && okTel;
   },
   3: () => {
-    // SITE
     const siteInput = document.getElementById('site');
     let url = normalizeUrlMaybe(siteInput.value);
     let okSite = false;
@@ -458,35 +466,27 @@ const STEP_VALIDATORS = {
     } catch { okSite = false; }
     showFieldError('site', okSite ? '' : 'Digite um site válido. Ex.: https://suaempresa.com');
 
-    // INSTAGRAM (aceita handle ou link) e normaliza para URL
     const instaInput = document.getElementById('insta');
-    const normalized = normalizeInstagramInput(instaInput.value);
-    const okInsta = !!normalized;
-    showFieldError('insta', okInsta ? '' : 'Informe seu @ ou link do Instagram.');
-    if (okInsta) instaInput.value = normalized;
+    const parsed = normalizeInstagram(instaInput.value);
+    const okInsta = !!parsed.handle;
+    showFieldError('insta', okInsta ? '' : 'Informe um Instagram válido (link ou @usuario).');
+    if (okInsta) instaInput.value = parsed.url; // salva normalizado no input
 
     return okSite && okInsta;
   },
   5: () => {
-    recalcStep5UI(); // garante contador/erros atualizados
-
     const t = (document.getElementById('titulo').value || '').trim();
     const d = (document.getElementById('descricao').value || '').trim();
-
-    const tMin = CHAR_LIMITS.titulo.min, tMax = CHAR_LIMITS.titulo.max;
-    const dMin = CHAR_LIMITS.descricao.min, dMax = CHAR_LIMITS.descricao.max;
-
     let ok = true;
-    // erro “fixo” desta etapa (além do contador e overflow)
-    if (t.length < tMin || t.length > tMax) {
-      step5Messages.charError = `* O título deve ter entre ${tMin} e ${tMax} caracteres.`;
+    step5Messages.charError = '';
+
+    if (t.length < CHAR_LIMITS.titulo.min || t.length > CHAR_LIMITS.titulo.max) {
+      step5Messages.charError = `* O título deve ter entre ${CHAR_LIMITS.titulo.min} e ${CHAR_LIMITS.titulo.max} caracteres.`;
+      ok = false;
+    } else if (d.length < CHAR_LIMITS.descricao.min || d.length > CHAR_LIMITS.descricao.max) {
+      step5Messages.charError = `* A descrição deve ter entre ${CHAR_LIMITS.descricao.min} e ${CHAR_LIMITS.descricao.max} caracteres.`;
       ok = false;
     }
-    if (d.length > dMax) {
-      step5Messages.charError = `* A descrição deve ter no máximo ${dMax} caracteres.`;
-      ok = false;
-    }
-    if (d.length < dMin) ok = false;
 
     const selected = document.querySelector('input[name="categoria"]:checked');
     const catErr = document.getElementById('categoriaError');
@@ -544,7 +544,7 @@ function updateIndicator() {
 function showStep(n) {
   currentStep = Math.max(1, Math.min(totalSteps, n));
   steps.forEach((el, idx) => el.classList.toggle('active', idx === currentStep - 1));
-  if (currentStep === 5) recalcStep5UI();
+  if (currentStep === 5) { try { updateDescricaoCount(); } catch(e) {} }
   if (currentStep === 7) { try { buildReview(); } catch (e) { console.error('buildReview error', e); } }
   updateIndicator();
   revalidateStepNav();
@@ -598,6 +598,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   steps = Array.from(document.querySelectorAll('.step'));
   totalSteps = steps.length;
+
+  // contador dinâmico da descrição
+  document.getElementById('descricao')?.addEventListener('input', () => {
+    updateDescricaoCount();
+    revalidateStepNav();
+  });
+  updateDescricaoCount();
 
   document.addEventListener('input', (e) => {
     const activeStep = steps[currentStep - 1];
